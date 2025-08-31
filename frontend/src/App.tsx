@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useMatrix } from './hooks/useMatrix';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { Login } from './components/Login';
 import { MessageList } from './components/MessageList';
 import { MessageInput } from './components/MessageInput';
@@ -7,11 +7,89 @@ import { ConnectionStatus } from './components/ConnectionStatus';
 import { MyceliumStatus } from './components/MyceliumStatus';
 
 function App() {
-  const { user, client, logout, isLoading } = useMatrix();
+  const [user, setUser] = useState<any>(null);
+  const [client, setClient] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [rooms, setRooms] = useState<any[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [newRoomName, setNewRoomName] = useState('');
   const [roomAliasOrId, setRoomAliasOrId] = useState('');
+
+  // Debug states
+  useEffect(() => {
+    console.log('App Debug - State changed! user:', user);
+    console.log('App Debug - State changed! isLoading:', isLoading);
+    console.log('App Debug - State changed! client:', client ? 'exists' : 'null');
+  }, [user, isLoading, client]);
+
+  // Login function moved to App
+  const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
+    console.log('🔌 App login starting...');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const matrixClient = createClient({ baseUrl: `https://${serverName}` });
+
+      const loginResponse = await matrixClient.login('m.login.password', {
+        user: username,
+        password,
+        initial_device_display_name: 'Mycelium Matrix Chat',
+      });
+
+      console.log('✅ App login successful!');
+
+      const userData = {
+        userId: loginResponse.user_id!,
+        accessToken: loginResponse.access_token!,
+        deviceId: loginResponse.device_id!,
+        serverName,
+      };
+
+      console.log('👤 About to set user state in App:', userData);
+
+      // Set state - should trigger re-render
+      setUser(userData);
+      setClient(matrixClient);
+
+      await matrixClient.startClient();
+
+      console.log('✅ Sync started and completed');
+
+    } catch (err: any) {
+      console.error('❌ App login error:', err);
+      setError(err.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    if (client) {
+      await client.logout();
+      setClient(null);
+      setUser(null);
+      localStorage.removeItem('matrix_user');
+    }
+  }, [client]);
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('App Debug - user:', user);
+    console.log('App Debug - isLoading:', isLoading);
+    console.log('App Debug - error:', error);
+    console.log('App Debug - client:', client ? 'exists' : 'null');
+  }, [user, isLoading, error, client]);
+
+  // Force re-render when user state changes
+  const [renderKey, setRenderKey] = useState(0);
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log('🔄 Force re-render triggered by user state change');
+      setRenderKey(prev => prev + 1);
+    }
+  }, [user, isLoading]);
 
   useEffect(() => {
     if (client) {
@@ -59,11 +137,11 @@ function App() {
   }
 
   if (!user) {
-    return <Login />;
+    return <Login onLogin={login} isLoading={isLoading} error={error} />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+    <div key={`app-${user?.userId || 'guest'}-${renderKey}`} className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
       <aside className="w-full md:w-64 bg-white shadow-md p-4 md:min-h-screen md:max-h-screen overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Rooms</h2>
         <div className="mb-4">

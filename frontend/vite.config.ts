@@ -8,6 +8,7 @@ export default defineConfig({
       '/_matrix': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        rewrite: (path) => path, // Don't rewrite, let the gateway handle it
       },
     },
   },

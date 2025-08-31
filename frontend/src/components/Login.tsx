@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import { useMatrix } from '../hooks/useMatrix';
 
 interface LoginProps {
-  onLoginSuccess?: () => void;
+  onLogin?: (username: string, password: string, serverName: string) => Promise<void>;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const { login, isLoading, error } = useMatrix();
+export const Login: React.FC<LoginProps> = ({ onLogin, isLoading = false, error }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [serverName, setServerName] = useState('matrix.org');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(username, password, serverName);
-    if (onLoginSuccess) onLoginSuccess();
+    if (onLogin) {
+      await onLogin(username, password, serverName);
+    }
   };
 
   return (

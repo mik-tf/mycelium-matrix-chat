@@ -22,43 +22,68 @@ export const useMatrix = () => {
       setUser(storedUser);
       // Recreate client
       const matrixClient = createClient({
-        baseUrl: `http://localhost:8080/_matrix`,
+        baseUrl: `https://${storedUser.serverName}`,
         accessToken: storedUser.accessToken,
         userId: storedUser.userId,
         deviceId: storedUser.deviceId,
       });
+      // Temporary direct connection to Matrix.org for testing
       setClient(matrixClient);
     }
   }, []);
 
   const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const matrixClient = createClient({ baseUrl: `http://localhost:8080/_matrix` });
+    console.log('🔌 Starting login process...');
+    setIsLoading(true);  // Force loading state
+    setError(null);      // Clear any previous errors
 
+    try {
+      const baseUrl = `https://${serverName}`;
+
+      console.log('🌐 Creating Matrix client with baseUrl:', baseUrl);
+      const matrixClient = createClient({ baseUrl });
+
+      console.log('🔐 Attempting login...');
       const loginResponse = await matrixClient.login('m.login.password', {
         user: username,
         password,
         initial_device_display_name: 'Mycelium Matrix Chat',
       });
 
-      const user: MatrixUser = {
+      console.log('✅ Login successful:', loginResponse);
+
+      // Create new user object to ensure reference changes
+      const userData: MatrixUser = {
         userId: loginResponse.user_id!,
         accessToken: loginResponse.access_token!,
         deviceId: loginResponse.device_id!,
         serverName,
       };
 
-      setUser(user);
-      setClient(matrixClient);
-      localStorage.setItem('matrix_user', JSON.stringify(user));
+      console.log('👤 About to set user state:', userData);
 
-      // Start sync
+      // Force synchronous state updates
+      setUser(userData);
+      setClient(matrixClient);
+
+      // Verify state was set (this should help debug)
+      setTimeout(() => {
+        console.log('🔥 Delayed check - user state should be set now');
+      }, 100);
+
+      // Store in localStorage AFTER state is set
+      localStorage.setItem('matrix_user', JSON.stringify(userData));
+
+      console.log('🔄 Starting Matrix sync...');
       await matrixClient.startClient();
+      console.log('✅ Matrix sync started successfully');
+
+      // Set loading to false AFTER sync started
+      setIsLoading(false);
+
     } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
+      console.error('❌ Login error:', err);
+      setError(err.message || 'Login failed - check console for details');
       setIsLoading(false);
     }
   }, []);

@@ -72,22 +72,39 @@ async fn proxy_request(
 
     tracing::info!("Proxying request: {} {} {}", method, path, query.unwrap_or(""));
 
-    // For now, we'll proxy all requests to the Matrix homeserver
-    // In a full implementation, this would have more sophisticated routing
+    let mut url = if path.starts_with("/_matrix") {
+        // Handle Matrix API requests by proxying to the correct homeserver
+        let mut homeserver = "https://matrix.org"; // Default homeserver
 
-    let mut url = format!("{}", state.config.matrix_bridge_url);
+        // Check if we need to proxy to a different homeserver
+        // For now, we'll use matrix.org but in the future this could be dynamic
+        // based on the user login request
 
-    // Add path and query
-    if path.starts_with("/_matrix") {
-        url.push_str(path);
-        if let Some(query) = query {
-            url.push('?');
-            url.push_str(query);
-        }
+        // Remove any duplicate /_matrix prefix
+        let api_path = if path.starts_with("/_matrix/_matrix") {
+            path.replace("/_matrix/_matrix", "/_matrix")
+        } else {
+            path.to_string()
+        };
+
+        format!("{}{}", homeserver, api_path)
     } else {
         // Handle frontend routes by serving a simple response
         return Ok(Response::new(Body::from("Gateway is running. Use /_matrix/* for Matrix federation.")));
+    };
+
+    // Add query parameters if they exist
+    if let Some(query) = query {
+        if url.contains('?') {
+            url.push('&');
+            url.push_str(query);
+        } else {
+            url.push('?');
+            url.push_str(query);
+        }
     }
+
+    tracing::debug!("Proxying to URL: {}", url);
 
     // Build the proxied request
     let mut proxy_req = state.http_client.request(method, &url);
