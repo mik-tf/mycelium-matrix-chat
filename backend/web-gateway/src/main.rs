@@ -92,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
     let config = WebGatewayConfig::from_env()?;
 
     // Create database connection pool
-    let database_url = "postgresql://mycelium:password@localhost/mycelium_db?schema=public".to_string();
+    let database_url = "postgresql://mycelium_user:mycelium_pass@localhost/mycelium_matrix".to_string();
     tracing::info!("Connecting to database: {}", database_url);
     let db_pool = mycelium_matrix_chat::database::create_pool(&database_url).await?;
     mycelium_matrix_chat::database::run_migrations(&db_pool).await?;
