@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 interface ConnectionStatusProps {
   isConnected?: boolean;
@@ -8,20 +9,18 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ isConnected 
   const [connectionState, setConnectionState] = useState<'online' | 'offline' | 'connecting'>('connecting');
 
   useEffect(() => {
-    // Simulate connection check to Web Gateway every 10 seconds
+    // Check API service connection every 10 seconds
     const checkConnection = async () => {
       try {
-        const response = await fetch('http://localhost:8080/health', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const isHealthy = await apiService.healthCheck();
 
-        if (response.ok) {
+        if (isHealthy) {
           setConnectionState('online');
         } else {
           setConnectionState('offline');
         }
       } catch (error) {
+        console.warn('Connection status check failed:', error);
         setConnectionState('offline');
       }
     };

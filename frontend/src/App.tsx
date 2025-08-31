@@ -5,6 +5,7 @@ import { MessageList } from './components/MessageList';
 import { MessageInput } from './components/MessageInput';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { MyceliumStatus } from './components/MyceliumStatus';
+import { apiService } from './services/api';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -23,31 +24,39 @@ function App() {
     console.log('App Debug - State changed! client:', client ? 'exists' : 'null');
   }, [user, isLoading, client]);
 
-  // Login function moved to App
+  // Login function moved to App - now uses API service first
   const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
-    console.log('🔌 App login starting...');
+    console.log('🔌 API login starting...');
     setIsLoading(true);
     setError(null);
 
     try {
-      const matrixClient = createClient({ baseUrl: `https://${serverName}` });
+      // First, authenticate via our API gateway
+      console.log('🔗 Calling API login...');
+      const authResponse = await apiService.login({ username, password });
 
-      const loginResponse = await matrixClient.login('m.login.password', {
-        user: username,
-        password,
-        initial_device_display_name: 'Mycelium Matrix Chat',
+      if (!authResponse.success || !authResponse.data) {
+        throw new Error(authResponse.error || 'API authentication failed');
+      }
+
+      console.log('✅ API login successful!', authResponse.data);
+
+      // Now create Matrix client for message synchronization
+      const matrixClient = createClient({
+        baseUrl: `https://${serverName}`,
+        accessToken: authResponse.data.access_token,
+        userId: authResponse.data.user_id,
       });
 
-      console.log('✅ App login successful!');
-
+      // Set state with API data
       const userData = {
-        userId: loginResponse.user_id!,
-        accessToken: loginResponse.access_token!,
-        deviceId: loginResponse.device_id!,
+        userId: authResponse.data.user_id,
+        accessToken: authResponse.data.access_token,
         serverName,
+        isApiAuthenticated: true,
       };
 
-      console.log('👤 About to set user state in App:', userData);
+      console.log('👤 Setting user state:', userData);
 
       // Set state - should trigger re-render
       setUser(userData);
@@ -55,11 +64,11 @@ function App() {
 
       await matrixClient.startClient();
 
-      console.log('✅ Sync started and completed');
+      console.log('✅ Matrix sync started and completed');
 
     } catch (err: any) {
       console.error('❌ App login error:', err);
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Authentication failed');
     } finally {
       setIsLoading(false);
     }
@@ -102,27 +111,65 @@ function App() {
   }, [client]);
 
   const createRoom = async () => {
-    if (client && newRoomName) {
-      try {
-        const response = await client.createRoom({
-          name: newRoomName,
-        });
+    if (!newRoomName.trim()) return;
+
+    console.log('🏗️ Creating room via API:', newRoomName);
+    try {
+      const response = await apiService.createRoom({
+        room_name: newRoomName,
+        is_public: false,
+      });
+
+      if (response.success && response.data) {
+        console.log('✅ Room created:', response.data);
+        // If Matrix client exists, try to join the room via Matrix
+        if (client && response.data.room_id) {
+          try {
+            await client.joinRoom(response.data.room_id);
+            console.log('✅ Joined room via Matrix client');
+          } catch (err) {
+            console.warn('⚠️ Matrix join failed, but room was created in database');
+          }
+        }
         setNewRoomName('');
-        // Rooms will be loaded via the event listener
-      } catch (err) {
-        console.error('Failed to create room:', err);
+      } else {
+        console.error('❌ API room creation failed:', response.error);
+        setError(response.error || 'Failed to create room');
       }
+    } catch (err: any) {
+      console.error('❌ Room creation failed:', err);
+      setError(err.message || 'Failed to create room');
     }
   };
 
   const joinRoom = async () => {
-    if (client && roomAliasOrId) {
-      try {
-        await client.joinRoom(roomAliasOrId);
+    if (!roomAliasOrId.trim()) return;
+
+    console.log('🚪 Joining room via API:', roomAliasOrId);
+    try {
+      const response = await apiService.joinRoom({
+        room_id: roomAliasOrId,
+      });
+
+      if (response.success && response.data) {
+        console.log('✅ Room join successful:', response.data);
+        // If Matrix client exists, try to join via Matrix as well
+        if (client && response.data.room_id) {
+          try {
+            await client.joinRoom(response.data.room_id);
+            console.log('✅ Joined room via Matrix client');
+          } catch (err) {
+            console.warn('⚠️ Matrix join failed, but room was joined in API');
+          }
+        }
         setRoomAliasOrId('');
-      } catch (err) {
-        console.error('Failed to join room:', err);
+      } else {
+        console.error('❌ API room join failed:', response.error);
+        setError(response.error || 'Failed to join room');
       }
+    } catch (err: any) {
+      console.error('❌ Room join failed:', err);
+      setError(err.message || 'Failed to join room');
     }
   };
 
