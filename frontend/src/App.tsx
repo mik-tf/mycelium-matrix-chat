@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useMatrix } from './hooks/useMatrix';
 import { Login } from './components/Login';
+import { MessageList } from './components/MessageList';
+import { MessageInput } from './components/MessageInput';
+import { ConnectionStatus } from './components/ConnectionStatus';
+import { MyceliumStatus } from './components/MyceliumStatus';
 
 function App() {
   const { user, client, logout, isLoading } = useMatrix();
@@ -59,8 +63,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <aside className="w-64 bg-white shadow-md p-4">
+    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+      <aside className="w-full md:w-64 bg-white shadow-md p-4 md:min-h-screen md:max-h-screen overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Rooms</h2>
         <div className="mb-4">
           <input
@@ -104,20 +108,26 @@ function App() {
         </ul>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-800">
+        <header className="bg-white shadow p-4 flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0">
+          <h1 className="text-lg md:text-xl font-bold text-gray-800">
             Mycelium Matrix Chat
           </h1>
-          <div>
-            <span className="text-sm text-gray-600 mr-4">
-              {user.userId}
-            </span>
-            <button
-              onClick={logout}
-              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-            >
-              Logout
-            </button>
+          <div className="flex flex-wrap items-center space-x-2 md:space-x-4 w-full md:w-auto justify-between md:justify-end">
+            <div className="flex items-center space-x-2">
+              <ConnectionStatus />
+              <MyceliumStatus client={client ?? undefined} room={selectedRoom ?? undefined} />
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs md:text-sm text-gray-600 truncate max-w-32 md:max-w-none">
+                {user.userId}
+              </span>
+              <button
+                onClick={logout}
+                className="bg-red-500 hover:bg-red-600 text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4">
@@ -126,19 +136,8 @@ function App() {
               <div className="p-4 border-b">
                 <h3 className="text-lg font-semibold">{selectedRoom.name || selectedRoom.roomId}</h3>
               </div>
-              <div className="flex-1 p-4 overflow-y-auto">
-                <p className="text-gray-500">
-                  Messages will be displayed here.
-                </p>
-              </div>
-              <div className="p-4 border-t">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
-                  disabled
-                />
-              </div>
+              {client && <MessageList room={selectedRoom} client={client} />}
+              {client && <MessageInput room={selectedRoom} client={client} />}
             </div>
           ) : (
             <div className="bg-white p-8 rounded-lg shadow-md text-center">
