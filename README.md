@@ -299,15 +299,11 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - **Documentation**: [Complete documentation](docs/)
 - **Issues**: [GitHub Issues](https://github.com/mik-tf/mycelium-matrix-chat/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/mik-tf/mycelium-matrix-chat/discussions)
-- **Matrix Room**: `#mycelium-matrix:matrix.org`
 
 ---
 
 <div align="center">
 
 **🌟 Star this repository if you're excited about the future of decentralized communication! 🌟**
-
-*Made with ❤️ by the decentralized internet community*
 
 </div>
