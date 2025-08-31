@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT destination_server, mycelium_key, last_successful, latency_ms\n            FROM federation_routes\n            WHERE destination_server = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "destination_server",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "mycelium_key",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "last_successful",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "latency_ms",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "66073f4e3dccc2d0aebfbd6b19c99801e2e765bb8d96e3a8f05af2287414d2bf"
+}

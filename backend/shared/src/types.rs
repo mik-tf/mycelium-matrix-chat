@@ -3,6 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatrixEvent {
+    pub event_id: String,
     pub event_type: String,
     pub room_id: String,
     pub sender: String,
@@ -59,8 +60,8 @@ pub enum ConnectionType {
 pub struct FederationRoute {
     pub destination_server: String,
     pub mycelium_key: String,
-    pub last_successful: u64, // timestamp
-    pub latency_ms: u64,
+    pub last_successful: i64, // timestamp
+    pub latency_ms: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,7 +76,7 @@ pub struct RoomState {
 pub struct BridgeStatus {
     pub connected_servers: u32,
     pub pending_messages: u32,
-    pub last_sync: u64,
+    pub last_sync: i64,
     pub mycelium_connected: bool,
 }
 
@@ -87,7 +88,7 @@ impl Default for BridgeStatus {
             last_sync: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
-                .as_secs(),
+                .as_secs() as i64,
             mycelium_connected: false,
         }
     }

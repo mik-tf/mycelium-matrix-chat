@@ -120,10 +120,10 @@ impl MatrixMyceliumBridge {
         Ok(BridgeStatus {
             connected_servers: server_discovery.len() as u32,
             pending_messages: 0, // TODO: implement message queue tracking
-            last_sync: SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
+                last_sync: SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64,
             mycelium_connected,
         })
     }

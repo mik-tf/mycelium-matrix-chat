@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: mycelium-matrix-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: mycelium_matrix
+      POSTGRES_USER: mycelium_user
+      POSTGRES_PASSWORD: mycelium_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - mycelium-network
+
+volumes:
+  postgres_data:
+
+networks:
+  mycelium-network:
+    driver: bridge

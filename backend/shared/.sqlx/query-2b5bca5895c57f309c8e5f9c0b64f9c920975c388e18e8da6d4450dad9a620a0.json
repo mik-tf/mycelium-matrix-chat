@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO federation_routes\n            (destination_server, mycelium_key, last_successful, latency_ms)\n            VALUES ($1, $2, $3, $4)\n            ON CONFLICT (destination_server) DO UPDATE SET\n                mycelium_key = EXCLUDED.mycelium_key,\n                last_successful = EXCLUDED.last_successful,\n                latency_ms = EXCLUDED.latency_ms\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2b5bca5895c57f309c8e5f9c0b64f9c920975c388e18e8da6d4450dad9a620a0"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO rooms (room_id, is_public)\n            VALUES ($1, $2)\n            ON CONFLICT (room_id) DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b6ac0ab0680b4f7d87ce93cb706c83f21d6662fecf2a6ff66f6f850bc8e820f7"
+}
