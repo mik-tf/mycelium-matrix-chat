@@ -1,22 +1,84 @@
 use axum::{
     body::Body,
-    extract::{Request, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::any,
+    extract::{Path, Request, State},
+    http::{StatusCode, Method},
+    response::{IntoResponse, Response, Json},
+    routing::{any, get, post},
+    Json as AxumJson,
     Router,
+    middleware,
 };
-use mycelium_matrix_chat::{config::WebGatewayConfig, error::BridgeError};
+use mycelium_matrix_chat::{config::WebGatewayConfig, error::BridgeError, database::Database};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
+// API Types
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiResponse<T> {
+    pub success: bool,
+    pub data: Option<T>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRoomRequest {
+    pub room_name: String,
+    pub topic: Option<String>,
+    pub is_public: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateRoomResponse {
+    pub room_id: String,
+    pub room_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JoinRoomRequest {
+    pub room_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JoinRoomResponse {
+    pub room_id: String,
+    pub joined: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RoomInfo {
+    pub room_id: String,
+    pub room_name: String,
+    pub topic: Option<String>,
+    pub member_count: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListRoomsResponse {
+    pub rooms: Vec<RoomInfo>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthResponse {
+    pub access_token: String,
+    pub user_id: String,
+}
+
 #[derive(Clone)]
 struct GatewayState {
     config: WebGatewayConfig,
     http_client: Client,
+    database: Arc<Database>,
 }
 
 #[tokio::main]
@@ -29,6 +91,13 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let config = WebGatewayConfig::from_env()?;
 
+    // Create database connection pool
+    let database_url = "postgresql://mycelium:password@localhost/mycelium_db?schema=public".to_string();
+    tracing::info!("Connecting to database: {}", database_url);
+    let db_pool = mycelium_matrix_chat::database::create_pool(&database_url).await?;
+    mycelium_matrix_chat::database::run_migrations(&db_pool).await?;
+    let database = Database::new(db_pool).await;
+
     // Create HTTP client
     let http_client = Client::builder()
         .timeout(std::time::Duration::from_secs(30))
@@ -40,10 +109,18 @@ async fn main() -> anyhow::Result<()> {
     let state = GatewayState {
         config,
         http_client,
+        database: Arc::new(database),
     };
 
     // Build application
     let app = Router::new()
+        // API routes
+        .route("/api/rooms/create", post(create_room))
+        .route("/api/rooms/join/:room_id", post(join_room))
+        .route("/api/rooms/list", get(list_rooms))
+        .route("/api/auth/login", post(auth_login))
+        .route("/api/auth/logout", post(auth_logout))
+        // Legacy proxy routes
         .route("/", any(proxy_request))
         .route("/*path", any(proxy_request))
         .layer(CorsLayer::permissive())
@@ -60,6 +137,140 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+// API Endpoint Handlers
+
+async fn create_room(
+    State(state): State<Arc<GatewayState>>,
+    AxumJson(request): AxumJson<CreateRoomRequest>,
+) -> Json<ApiResponse<CreateRoomResponse>> {
+    tracing::info!("Creating room: {}", request.room_name);
+
+    // Generate a room ID (simple implementation for now)
+    let room_id = format!("room_{}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis());
+
+    // Create room in database
+    let room_state = mycelium_matrix_chat::types::RoomState {
+        room_id: room_id.clone(),
+        state_events: Vec::new(),
+        members: Vec::new(),
+        is_external: request.is_public.unwrap_or(false),
+    };
+
+    match state.database.store_room_state(&room_state).await {
+        Ok(_) => {
+            tracing::info!("Room created successfully: {}", room_id);
+            Json(ApiResponse {
+                success: true,
+                data: Some(CreateRoomResponse {
+                    room_id: room_id.clone(),
+                    room_name: request.room_name.clone(),
+                }),
+                error: None,
+            })
+        }
+        Err(e) => {
+            tracing::error!("Failed to create room: {}", e);
+            Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some(format!("Failed to create room: {}", e)),
+            })
+        }
+    }
+}
+
+async fn join_room(
+    State(state): State<Arc<GatewayState>>,
+    Path(room_id): Path<String>,
+    AxumJson(_request): AxumJson<JoinRoomRequest>,
+) -> Json<ApiResponse<JoinRoomResponse>> {
+    tracing::info!("Joining room: {}", room_id);
+
+    // Check if room exists
+    let room_state = match state.database.get_room_state(&room_id).await {
+        Ok(Some(state)) => state,
+        Ok(None) => {
+            return Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some("Room not found".to_string()),
+            });
+        }
+        Err(e) => {
+            tracing::error!("Failed to get room state: {}", e);
+            return Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some(format!("Database error: {}", e)),
+            });
+        }
+    };
+
+    // For now, we'll just assume successful join (no user ID tracking yet)
+    tracing::info!("Room joined successfully: {}", room_id);
+
+    Json(ApiResponse {
+        success: true,
+        data: Some(JoinRoomResponse {
+            room_id: room_id.clone(),
+            joined: true,
+        }),
+        error: None,
+    })
+}
+
+async fn list_rooms(
+    State(state): State<Arc<GatewayState>>,
+) -> Json<ApiResponse<ListRoomsResponse>> {
+    tracing::info!("Listing rooms");
+
+    // For now, return a simple empty list (we need user session tracking to filter)
+    // In a real implementation, we'd get this from the database
+    let rooms = Vec::new();
+
+    Json(ApiResponse {
+        success: true,
+        data: Some(ListRoomsResponse { rooms }),
+        error: None,
+    })
+}
+
+async fn auth_login(
+    State(state): State<Arc<GatewayState>>,
+    AxumJson(_request): AxumJson<AuthRequest>,
+) -> Json<ApiResponse<AuthResponse>> {
+    tracing::info!("Auth login request");
+
+    // For now, return a mock response (proper Matrix authentication would proxy to homeserver)
+    let user_id = "@test:example.com".to_string();
+    let access_token = "mock_token_123".to_string();
+
+    Json(ApiResponse {
+        success: true,
+        data: Some(AuthResponse {
+            access_token,
+            user_id,
+        }),
+        error: None,
+    })
+}
+
+async fn auth_logout(
+    State(state): State<Arc<GatewayState>>,
+) -> Json<ApiResponse<String>> {
+    tracing::info!("Auth logout request");
+
+    // For now, return a mock response
+    Json(ApiResponse {
+        success: true,
+        data: Some("Logged out successfully".to_string()),
+        error: None,
+    })
 }
 
 async fn proxy_request(
@@ -172,16 +383,10 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_gateway_state_creation() {
+    async fn test_config_defaults() {
         let config = WebGatewayConfig::default();
-        let http_client = Client::new();
 
-        let state = GatewayState {
-            config,
-            http_client,
-        };
-
-        assert_eq!(state.config.server_host, "0.0.0.0");
-        assert_eq!(state.config.server_port, 8080);
+        assert_eq!(config.server_host, "0.0.0.0");
+        assert_eq!(config.server_port, 8080);
     }
 }
