@@ -1,0 +1,73 @@
+# Rust build artifacts
+target/
+
+# Database files (for development testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Node.js (if using for frontend later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backup files
+*.bak
+*.backup
+
+# Docker volumes (optional)
+.docker-volumes/
+
+# Temporary files
+*.tmp
+.cache/
+
+# Log files
+*.log
+
+# Coverage reports
+coverage/
+*.profraw
+
+# Database migrations (development)
+migrations_dev/
+
+# Testing artifacts
+test-results/
+
+# Development databases
+dev.db
+
+# SSH keys (if any)
+*.key
+*.pem
+
+# Secrets
+secrets/
+*secret*
+
+# Build artifacts for other platforms
+*.exe
+*.dll
+*.dylib
