@@ -100,21 +100,29 @@ test-database:
 # ===== ENVIRONMENT SETUP =====
 
 # Full development environment setup
-setup-full: down clean
+setup-full: deep-clean
 	@echo "🐳 Setting up complete development environment..."
+	@echo ""
+	@echo "🧹 Making sure ports 8080 and 5173 are free..."
+	-sudo fuser -k 8080/tcp 2>/dev/null || true
+	-sudo fuser -k 5173/tcp 2>/dev/null || true
+	-sudo systemctl stop nginx 2>/dev/null || true
+	-sudo killall nginx 2>/dev/null || true
+	-sudo killall cargo npm java node 2>/dev/null || true
+	@echo "✅ Ports cleared"
 	@echo ""
 	@echo "📦 Starting PostgreSQL database..."
 	docker-compose -f docker/docker-compose.yml up -d
 	@echo "⏳ Waiting 10s for database..."
 	sleep 10
 	@echo ""
-	@echo "🌐 Starting Web Gateway..."
-	cd backend/web-gateway && cargo run --quiet 2>&1 | grep -E "(Web Gateway|error|panic)" &
+	@echo "🌐 Starting Web Gateway (Rust Axum Server)..."
+	cd backend/web-gateway && cargo run --quiet 2>&1 | grep -E "(Web Gateway|listening|error)" &
 	PID_WEB_GATEWAY=$$!
-	@echo "⏳ Waiting 5s for Web Gateway..."
-	sleep 5
+	@echo "⏳ Waiting 8s for Web Gateway..."
+	sleep 8
 	@echo ""
-	@echo "💻 Starting Frontend..."
+	@echo "💻 Starting Frontend (React on port 5173)..."
 	cd frontend && npm run dev 2>&1 | grep -E "(ready|error|build)" &
 	PID_FRONTEND=$$!
 	@echo "⏳ Waiting 5s for Frontend..."
@@ -122,8 +130,8 @@ setup-full: down clean
 	@echo ""
 	@echo "🔍 Verifying services..."
 	docker ps | grep mycelium-postgres > /dev/null && echo "✅ PostgreSQL: ACTIVE" || echo "❌ PostgreSQL: FAILED"
-	curl -s http://localhost:8080/ > /dev/null && echo "✅ Web Gateway: ACTIVE" || echo "❌ Web Gateway: FAILED"
-	curl -s http://localhost:5173/ | grep -q "html" && echo "✅ Frontend: ACTIVE" || echo "❌ Frontend: FAILED"
+	curl -s http://localhost:8080/ > /dev/null && echo "✅ Web Gateway (Rust): ACTIVE" || echo "❌ Web Gateway: FAILED"
+	curl -s http://localhost:5173/ | grep -q "html" && echo "✅ Frontend (React): ACTIVE" || echo "❌ Frontend: FAILED"
 	@echo ""
 	@echo "🎉 All services running!"
 	@echo "📱 Frontend: http://localhost:5173"
@@ -133,11 +141,21 @@ setup-full: down clean
 	@echo "💡 To stop services: make down"
 	@echo ""
 
-# Setup for Phase 1 testing
-setup-phase1: setup-full
+# Quick setup for Phase 1 testing (starts after cleaning)
+setup-phase1: deep-clean
 	@echo "🔬 Phase 1 Testing Environment Ready!"
+	@echo "🧹 Starting with clean slate..."
+	@echo "📦 Restarting PostgreSQL..."
+	docker-compose -f docker/docker-compose.yml up -d
+	sleep 8
+	@echo "🌐 Starting our Web Gateway (Rust)..."
+	cd backend/web-gateway && cargo run --quiet > /dev/null 2>&1 &
+	sleep 5
+	@echo "💻 Starting React frontend..."
+	cd frontend && npm run dev > /dev/null 2>&1 &
+	sleep 3
 	@echo ""
-	@echo "📋 Available Test Commands:"
+	@echo "📋 Ready for testing:"
 	@echo "  make test-backend      # Test infrastructure"
 	@echo "  make test-integration  # Test Matrix.org auth"
 	@echo "  make test-database     # Test persistence"
@@ -148,12 +166,22 @@ setup-phase1: setup-full
 	@echo ""
 	@echo "Complete testing guide: ./docs/ops/phase-1-test.md"
 
-# Stop all services
-down:
-	@echo "🛑 Stopping all services..."
+# Stop all services with deep cleanup
+down: deep-clean
+	@echo "✅ All services stopped and cleaned"
+
+# Complete deep cleanup
+deep-clean:
+	@echo "⏫ Deep cleaning all services and ports..."
 	-docker-compose -f docker/docker-compose.yml down
-	-killall cargo npm java node 2>/dev/null || true
-	@echo "✅ All services stopped"
+	-docker network prune -f
+	-sudo systemctl stop nginx 2>/dev/null || true
+	-sudo killall nginx 2>/dev/null || true
+	-sudo fuser -k 8080/tcp 2>/dev/null || true
+	-sudo fuser -k 5173/tcp 2>/dev/null || true
+	-sudo killall cargo npm java node 2>/dev/null || true
+	-ps aux | grep -E '(nginx|cargo|npm|vite)' | grep -v grep | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+	@echo "✅ Deep cleanup completed"
 
 # Show service status
 status:
