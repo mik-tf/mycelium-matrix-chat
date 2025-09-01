@@ -74,6 +74,23 @@ pub struct AuthResponse {
     pub user_id: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MatrixLoginRequest {
+    pub r#type: String,
+    pub user: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MatrixLoginResponse {
+    pub access_token: String,
+    pub user_id: String,
+    #[serde(rename = "device_id")]
+    pub device_id: Option<String>,
+    #[serde(rename = "home_server")]
+    pub home_server: Option<String>,
+}
+
 #[derive(Clone)]
 struct GatewayState {
     config: WebGatewayConfig,
@@ -242,19 +259,70 @@ async fn list_rooms(
 
 async fn auth_login(
     State(state): State<Arc<GatewayState>>,
-    AxumJson(_request): AxumJson<AuthRequest>,
+    AxumJson(request): AxumJson<AuthRequest>,
 ) -> Json<ApiResponse<AuthResponse>> {
-    tracing::info!("Auth login request");
+    tracing::info!("Auth login request for user: {}", request.username);
 
-    // For now, return a mock response (proper Matrix authentication would proxy to homeserver)
-    let user_id = "@test:example.com".to_string();
-    let access_token = "mock_token_123".to_string();
+    // Format username for Matrix.org (add homeserver if not present)
+    let user = if request.username.contains('@') {
+        request.username.clone()
+    } else {
+        format!("{}@matrix.org", request.username)
+    };
+
+    // Prepare Matrix.org login request
+    let matrix_req = MatrixLoginRequest {
+        r#type: "m.login.password".to_string(),
+        user: user.clone(),
+        password: request.password.clone(),
+    };
+
+    // Make request to Matrix.org
+    let response = match state.http_client
+        .post("https://matrix.org/_matrix/client/r0/login")
+        .json(&matrix_req)
+        .send()
+        .await
+    {
+        Ok(resp) if resp.status().is_success() => resp,
+        Ok(resp) => {
+            tracing::error!("Matrix.org login failed with status: {}", resp.status());
+            return Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some("Authentication failed".to_string()),
+            });
+        }
+        Err(e) => {
+            tracing::error!("Failed to connect to Matrix.org: {}", e);
+            return Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some("Unable to connect to Matrix.org".to_string()),
+            });
+        }
+    };
+
+    // Parse Matrix.org response
+    let matrix_resp: MatrixLoginResponse = match response.json().await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to parse Matrix.org response: {}", e);
+            return Json(ApiResponse {
+                success: false,
+                data: None,
+                error: Some("Invalid response from Matrix.org".to_string()),
+            });
+        }
+    };
+
+    tracing::info!("User logged in successfully: {}", matrix_resp.user_id);
 
     Json(ApiResponse {
         success: true,
         data: Some(AuthResponse {
-            access_token,
-            user_id,
+            access_token: matrix_resp.access_token,
+            user_id: matrix_resp.user_id,
         }),
         error: None,
     })
