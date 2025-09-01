@@ -248,70 +248,109 @@ docs:
 
 # ===== PHASE 2 TARGETS =====
 
+# Phase 2 Database Setup
+setup-phase2-db:
+	@echo "📦 Setting up Phase 2 PostgreSQL database..."
+	-docker-compose -f docker/docker-compose.yml down -v
+	docker-compose -f docker/docker-compose.yml up -d postgres-db
+	@echo "⏳ Waiting for database to be ready..."
+	sleep 25
+	@echo "🔍 Testing database connection..."
+	docker ps | grep mycelium-postgres && echo "✅ Database container is running" || (echo "❌ Database failed to start" && exit 1)
+	@echo "✅ Database ready for Phase 2 testing"
+
+# Build Matrix Bridge only
+build-bridge:
+	@echo "⚡ Building Matrix Bridge..."
+	cd backend/matrix-bridge && cargo build --release --quiet
+	@echo "🔍 Checking if binary was created..."
+	cd backend/matrix-bridge && ls -la target/release/matrix-bridge && echo "✅ Bridge binary created" || (echo "❌ Bridge binary not found" && exit 1)
+
+# Clean Phase 2 processes (selective cleanup)
+clean-phase2:
+	@echo "🧹 Selective cleanup for Phase 2..."
+	-docker-compose -f docker/docker-compose.yml down
+	-sudo systemctl stop nginx apache2 2>/dev/null || true
+	-sudo fuser -k 8080/tcp 8081/tcp 5173/tcp 8989/tcp 2>/dev/null || true
+	@echo "✅ Phase 2 cleanup completed"
+
 # Setup Phase 2 Bridge + Mycelium locally (development)
-setup-phase2-local: deep-clean
+setup-phase2-local: clean-phase2 setup-phase2-db build-bridge
 	@echo "🚀 Setting up Phase 2 Bridge + Mycelium integration (localhost:8081)..."
 	@echo ""
-	@echo "🧹 Clearing ALL services and ports..."
-	-sudo systemctl stop nginx 2>/dev/null || true
-	-sudo systemctl stop apache2 2>/dev/null || true
-	-sudo docker-compose -f docker/docker-compose.yml down 2>/dev/null || true
-	-ps aux | grep -E '(nginx|apache|cargo|npm|node|mycel|mycelium)' | grep -v grep | awk '{print $2}' | xargs sudo kill -9 2>/dev/null || true
-	@echo "✅ All services cleared"
-	@echo ""
-	@echo "🧹 Extra port cleanup..."
-	-sudo fuser -k 8080/tcp 8081/tcp 5173/tcp 8989/tcp 2>/dev/null || true
-	-sudo netstat -tulpn | grep -E ':80[08]|:5173|:8989' | awk '{print $7}' | cut -d'/' -f1 | xargs sudo kill -9 2>/dev/null || true
-	@echo "✅ Ports cleared"
-	@echo ""
-	@echo "📦 Starting PostgreSQL database..."
-	docker-compose -f docker/docker-compose.yml up -d
-	@echo "⏳ Waiting 20s for database..."
-	sleep 20
-	@echo ""
-	@echo "⚡ Building Matrix Bridge..."
-	cd backend/matrix-bridge && cargo clean && cargo build --release --quiet || (echo "❌ Bridge build failed" && exit 1)
-	@echo "✅ Bridge built successfully"
-	@echo ""
 	@echo "🌉⚡ Starting Matrix Bridge (localhost:8081)..."
-	cd backend/matrix-bridge && timeout 15s ./target/release/matrix-bridge &
+	cd backend/matrix-bridge && ./target/release/matrix-bridge > /tmp/bridge.log 2>&1 &
 	BRIDGE_PID=$$! && echo "$$BRIDGE_PID" > /tmp/matrix-bridge.pid
-	@echo "⏳ Starting Matrix Bridge..."
-	sleep 5
-	ps -p $$BRIDGE_PID > /dev/null && echo "✅ Bridge process started" || (echo "❌ Bridge failed to start" && exit 1)
+	@echo "Bridge PID: $$BRIDGE_PID"
+	@echo "📝 Bridge log file: /tmp/bridge.log"
+	sleep 7
 	@echo ""
-	@echo "🌐 Starting Web Gateway (localhost:8080)..."
-	cd backend/web-gateway && cargo run --quiet > /dev/null 2>&1 &
-	PID_WEB_GATEWAY=$$!
-	sleep 3
-	@echo "✅ Web Gateway attempted"
+	@echo "🔍 Checking bridge status..."
+	if ps -p $$BRIDGE_PID > /dev/null 2>&1; then \
+		echo "✅ Matrix Bridge process running (PID: $$BRIDGE_PID)" ; \
+	else \
+		echo "❌ Matrix Bridge process not found (may have crashed)" ; \
+		cat /tmp/bridge.log || echo "No log file available" ; \
+		exit 1 ; \
+	fi
 	@echo ""
-	@echo "🔗 Checking for Mycelium - run this separately if needed:"
+	@echo "🔍 Checking if bridge is listening on port 8081..."
+	if netstat -tuln 2>/dev/null | grep -q :8081; then \
+		echo "✅ Bridge listening on port 8081" ; \
+		if curl -s http://localhost:8081/api/health 2>/dev/null | grep -q "ok\|status\|active"; then \
+			echo "  ✅ Bridge API responding" ; \
+		else \
+			echo "  ⚠️  Bridge API not responding (may still initializing)" ; \
+		fi ; \
+	else \
+		echo "⚠️  Port 8081 not listening (bridge may still starting or crashed)" ; \
+	fi
+	@echo ""
+	@echo "🔗 Mycelium setup instructions:"
+	@echo "  Run this separately for full Phase 2 P2P:"
 	@echo "    sudo mycelium --peers tcp://188.40.132.242:9651 quic://185.69.166.8:9651 --tun-name mycelium0"
 	@echo ""
-	@echo "⏳ Waiting for everything to stabilize..."
-	sleep 5
+	@echo "✅ Phase 2 Core Setup Complete!"
+	@echo "🌐 Matrix Bridge: Should be on localhost:8081"
+	@echo "⏳ API may take a moment to fully respond"
 	@echo ""
-	@echo "🔍 Verifying Phase 2 services..."
-	# Matrix Bridge
-	netstat -tulpn 2>/dev/null | grep :8081 | grep -v nginx && echo "✅ Matrix Bridge: Port 8081 listening" || echo "❌ Matrix Bridge: Port 8081 not responding (check nginx)"
-	curl -s http://localhost:8081/api/health 2>/dev/null | grep -q "ok\|status" && echo "  ✅ Bridge API: Responding" || echo "  ❌ Bridge API: Not responding"
-	# Web Gateway
-	curl -s http://localhost:8080/ 2>/dev/null && echo "✅ Web Gateway:    localhost:8080" || echo "❌ Web Gateway:    Failed"
-	# Check for conflicts
-	ps aux | grep nginx | grep -v grep && echo "⚠️  WARNING: Nginx detected - may be blocking port 8081" || echo "✅ No nginx conflicts detected"
+	@echo "💡 Test commands:"
+	@echo "  curl http://localhost:8081/api/health"
+	@echo "  tail -f /tmp/bridge.log"
+	@echo "  ps -p $$BRIDGE_PID"
+
+# Test Phase 2 Bridge separately
+test-bridge-only:
+	@echo "🌉 Testing Matrix Bridge Service..."
+	@if netstat -tuln 2>/dev/null | grep -q :8081; then \
+		echo "  ✅ Port 8081: Listening" ; \
+		CURL_TEST=$$(curl -s -m 5 http://localhost:8081/api/health 2>/dev/null) ; \
+		if [ $$? -eq 0 ] && echo "$$CURL_TEST" | grep -q -i "ok\|health\|200\|status"; then \
+			echo "  ✅ Bridge API: Responding" ; \
+		else \
+			echo "  ⚠️  Bridge API: No response (may be initializing)" ; \
+		fi ; \
+	else \
+		echo "  ❌ Port 8081: Not listening" ; \
+	fi
+	@echo "  📐 Process status:"
+	@if [ -f /tmp/matrix-bridge.pid ]; then \
+		BRIDGE_PID=$$(cat /tmp/matrix-bridge.pid) ; \
+		if ps -p $$BRIDGE_PID > /dev/null 2>&1; then \
+			echo "  ✅ Bridge Process: Running (PID: $$BRIDGE_PID)" ; \
+		else \
+			echo "  ❌ Bridge Process: Not running" ; \
+		fi ; \
+	else \
+		ps aux | grep -v grep | grep matrix-bridge && echo "  ✅ Bridge Process: Running" || echo "  ❌ Bridge Process: Not found" ; \
+	fi
 	@echo ""
-	@echo "🎉 Phase 2 setup attempted!"
-	@echo "🌐 Check:"
-	@echo "🔧 Matrix Bridge: netstat -tulpn | grep 8081"
-	@echo "🌐 Web Gateway: curl http://localhost:8080"
-	@echo "🔧 Bridge Process: ps aux | grep matrix-bridge"
+	@echo "📋 Bridge logs:"
+	@[ -f /tmp/bridge.log ] && tail -10 /tmp/bridge.log || echo "No bridge log file available"
 	@echo ""
-	@echo "💡 If Bridge isn't on 8081, run:"
-	@echo "   make down"
-	@echo "   make setup-phase2-local"
-	@echo ""
-	@echo "💡 To stop everything: make down"
+	@echo "💡 Debug commands:"
+	@echo "  Check full logs: tail -f /tmp/bridge.log"
+	@echo "  Kill and restart: make clean-phase2 && make setup-phase2-local"
 
 # Production deployment for Phase 2
 setup-phase2-prod: deploy-prod
