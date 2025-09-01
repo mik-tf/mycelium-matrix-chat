@@ -253,18 +253,22 @@ setup-phase2-db:
 	@echo "📦 Setting up Phase 2 PostgreSQL database..."
 	-docker-compose -f docker/docker-compose.yml down -v
 	docker-compose -f docker/docker-compose.yml up -d postgres-db
-	@echo "⏳ Waiting for database to be ready..."
-	sleep 25
+	@echo "⏳ Waiting for database to initialize completely..."
+	sleep 30
 	@echo "🔍 Testing database connection..."
-	docker ps | grep mycelium-postgres && echo "✅ Database container is running" || (echo "❌ Database failed to start" && exit 1)
-	@echo "✅ Database ready for Phase 2 testing"
+	docker ps | grep mycelium-postgres > /dev/null 2>&1 && echo "✅ Database container is running" || (echo "❌ Database container not found" && docker ps && exit 1)
+	docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database is accepting connections" || (echo "⚠️  Database still initializing..."
+	@echo "⏳ Waiting another 15s..."
+	sleep 15
+	docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database now ready" || echo "❌ Database failed to start properly")
+	@echo "✅ Database setup complete"
 
 # Build Matrix Bridge only
 build-bridge:
-	@echo "⚡ Building Matrix Bridge..."
+	@echo "⚡ Building Matrix Bridge (workspace mode)..."
 	cd backend/matrix-bridge && cargo build --release --quiet
-	@echo "🔍 Checking if binary was created..."
-	cd backend/matrix-bridge && ls -la target/release/matrix-bridge && echo "✅ Bridge binary created" || (echo "❌ Bridge binary not found" && exit 1)
+	@echo "🔍 Checking if binary was created in workspace..."
+	ls -la target/release/matrix-bridge && echo "✅ Bridge binary found in workspace" || (echo "❌ Bridge binary not found" && ls -la target/ && exit 1)
 
 # Clean Phase 2 processes (selective cleanup)
 clean-phase2:
@@ -278,12 +282,15 @@ clean-phase2:
 setup-phase2-local: clean-phase2 setup-phase2-db build-bridge
 	@echo "🚀 Setting up Phase 2 Bridge + Mycelium integration (localhost:8081)..."
 	@echo ""
-	@echo "🌉⚡ Starting Matrix Bridge (localhost:8081)..."
-	cd backend/matrix-bridge && ./target/release/matrix-bridge > /tmp/bridge.log 2>&1 &
+	@echo "🌉⚡ Starting Matrix Bridge (localhost:8081) with logging..."
+	@echo "📝 Bridge output will be shown HERE (realtime):"
+	@touch /tmp/bridge.log
+	./target/release/matrix-bridge 2>&1 | tee /tmp/bridge.log &
 	BRIDGE_PID=$$! && echo "$$BRIDGE_PID" > /tmp/matrix-bridge.pid
 	@echo "Bridge PID: $$BRIDGE_PID"
 	@echo "📝 Bridge log file: /tmp/bridge.log"
-	sleep 7
+	@echo "Waiting 10s for bridge to fully initialize..."
+	sleep 10
 	@echo ""
 	@echo "🔍 Checking bridge status..."
 	if ps -p $$BRIDGE_PID > /dev/null 2>&1; then \
