@@ -13,7 +13,7 @@ BACKEND INTEGRATION SUCCESSFULLY COMPLETED! 🎉
 
 ### 🌟 **PHASE 1 MVP SUCCESS METRICS:**
 - **🎯 Working Chat Application**: Users can login and see room interface
-- **🔐 Matrix Authentication**: Real accounts working (matrix.org tested)
+- **🔐 Mock Matrix Authentication**: Mock login working (@test:example.com) - Phase 1 infrastructure test
 - **📱 Responsive Design**: Mobile/desktop perfectly adapted
 - **⚡ Real-time Matrix SDK**: Authentication, sync, room management functional
 - **🔗 Connection Status**: Backend Web Gateway integration successful
@@ -29,7 +29,7 @@ BACKEND INTEGRATION SUCCESSFULLY COMPLETED! 🎉
 - **`/api/rooms/create`** ✅ POST - Creates room with database persistence
 - **`/api/rooms/join/:roomId`** ✅ POST - Joins room with validation
 - **`/api/rooms/list`** ✅ GET - Lists available rooms
-- **`/api/auth/login`** ✅ POST - Matrix authentication (mock)
+- **`/api/auth/login`** ✅ POST - Matrix authentication (MOCK for Phase 1 infrastructure testing - returns @test:example.com)
 - **`/api/auth/logout`** ✅ POST - Session cleanup
 - **Matrix Proxy** ✅ - Legacy `/_matrix/*` federation routing
 - **Database Connected** ✅ - PostgreSQL with SQLx migrations
