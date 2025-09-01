@@ -252,49 +252,66 @@ docs:
 setup-phase2-local: deep-clean
 	@echo "🚀 Setting up Phase 2 Bridge + Mycelium integration (localhost:8081)..."
 	@echo ""
-	@echo "🧹 Clearing ports 8080, 8081, 8973..."
-	-sudo fuser -k 8080/tcp 8081/tcp 5173/tcp 2>/dev/null || true
+	@echo "🧹 Clearing ALL services and ports..."
 	-sudo systemctl stop nginx 2>/dev/null || true
-	-sudo killall nginx cargo npm node 2>/dev/null || true
+	-sudo systemctl stop apache2 2>/dev/null || true
+	-sudo docker-compose -f docker/docker-compose.yml down 2>/dev/null || true
+	-ps aux | grep -E '(nginx|apache|cargo|npm|node|mycel|mycelium)' | grep -v grep | awk '{print $2}' | xargs sudo kill -9 2>/dev/null || true
+	@echo "✅ All services cleared"
+	@echo ""
+	@echo "🧹 Extra port cleanup..."
+	-sudo fuser -k 8080/tcp 8081/tcp 5173/tcp 8989/tcp 2>/dev/null || true
+	-sudo netstat -tulpn | grep -E ':80[08]|:5173|:8989' | awk '{print $7}' | cut -d'/' -f1 | xargs sudo kill -9 2>/dev/null || true
 	@echo "✅ Ports cleared"
 	@echo ""
-	@echo "📦 Starting PostgreSQL..."
+	@echo "📦 Starting PostgreSQL database..."
 	docker-compose -f docker/docker-compose.yml up -d
-	@echo "⏳ Waiting 10s for database..."
-	sleep 10
+	@echo "⏳ Waiting 20s for database..."
+	sleep 20
 	@echo ""
-	@echo "🔗 Starting Mycelium Node..."
-	cd backend/matrix-bridge && cargo build --release --quiet
-睡眠 5
+	@echo "⚡ Building Matrix Bridge..."
+	cd backend/matrix-bridge && cargo clean && cargo build --release --quiet || (echo "❌ Bridge build failed" && exit 1)
+	@echo "✅ Bridge built successfully"
+	@echo ""
 	@echo "🌉⚡ Starting Matrix Bridge (localhost:8081)..."
-	BRIDGE_PID=$$! && echo "Bridge PID: $$BRIDGE_PID" > /tmp/matrix-bridge.pid
-	@echo "⏳ Waiting 10s for services..."
-	sleep 10
+	cd backend/matrix-bridge && timeout 15s ./target/release/matrix-bridge &
+	BRIDGE_PID=$$! && echo "$$BRIDGE_PID" > /tmp/matrix-bridge.pid
+	@echo "⏳ Starting Matrix Bridge..."
+	sleep 5
+	ps -p $$BRIDGE_PID > /dev/null && echo "✅ Bridge process started" || (echo "❌ Bridge failed to start" && exit 1)
 	@echo ""
-	@echo "🌐 Starting Web Gateway..."
+	@echo "🌐 Starting Web Gateway (localhost:8080)..."
 	cd backend/web-gateway && cargo run --quiet > /dev/null 2>&1 &
 	PID_WEB_GATEWAY=$$!
-	@echo "⏳ Waiting 8s for Web Gateway..."
-	sleep 8
+	sleep 3
+	@echo "✅ Web Gateway attempted"
 	@echo ""
-	@echo "💻 Starting Frontend with Mycelium detection..."
-	cd frontend && npm run dev > /dev/null 2>&1 &
-	PID_FRONTEND=$$!
-	@echo "⏳ Waiting 5s for Frontend..."
+	@echo "🔗 Checking for Mycelium - run this separately if needed:"
+	@echo "    sudo mycelium --peers tcp://188.40.132.242:9651 quic://185.69.166.8:9651 --tun-name mycelium0"
+	@echo ""
+	@echo "⏳ Waiting for everything to stabilize..."
 	sleep 5
 	@echo ""
 	@echo "🔍 Verifying Phase 2 services..."
-	curl -s http://localhost:8081/api/health > /dev/null && echo "✅ Matrix Bridge:   localhost:8081" || echo "❌ Matrix Bridge:   FAILED"
-	curl -s http://localhost:8080/ > /dev/null && echo "✅ Web Gateway:    localhost:8080" || echo "❌ Web Gateway:    FAILED"
-	curl -s http://localhost:5173/ | grep -q "html" && echo "✅ Frontend:       localhost:5173" || echo "❌ Frontend:       FAILED"
+	# Matrix Bridge
+	netstat -tulpn 2>/dev/null | grep :8081 | grep -v nginx && echo "✅ Matrix Bridge: Port 8081 listening" || echo "❌ Matrix Bridge: Port 8081 not responding (check nginx)"
+	curl -s http://localhost:8081/api/health 2>/dev/null | grep -q "ok\|status" && echo "  ✅ Bridge API: Responding" || echo "  ❌ Bridge API: Not responding"
+	# Web Gateway
+	curl -s http://localhost:8080/ 2>/dev/null && echo "✅ Web Gateway:    localhost:8080" || echo "❌ Web Gateway:    Failed"
+	# Check for conflicts
+	ps aux | grep nginx | grep -v grep && echo "⚠️  WARNING: Nginx detected - may be blocking port 8081" || echo "✅ No nginx conflicts detected"
 	@echo ""
-	@echo "🎉 Phase 2 services running!"
-	@echo "🌐 Frontend:       http://localhost:5173 (Mycelium auto-detection)"
-	@echo "🌉 Matrix Bridge:  http://localhost:8081"
-	@echo "🌐 Web Gateway:    http://localhost:8080"
-	@echo "⚡ Mycelium Ready: Most connections will use P2P routing"
+	@echo "🎉 Phase 2 setup attempted!"
+	@echo "🌐 Check:"
+	@echo "🔧 Matrix Bridge: netstat -tulpn | grep 8081"
+	@echo "🌐 Web Gateway: curl http://localhost:8080"
+	@echo "🔧 Bridge Process: ps aux | grep matrix-bridge"
 	@echo ""
-	@echo "💡 To stop: make down"
+	@echo "💡 If Bridge isn't on 8081, run:"
+	@echo "   make down"
+	@echo "   make setup-phase2-local"
+	@echo ""
+	@echo "💡 To stop everything: make down"
 
 # Production deployment for Phase 2
 setup-phase2-prod: deploy-prod
