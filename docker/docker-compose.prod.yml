@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mycelium_matrix
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - type: bind
+        source: ./docker/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+
+  mycelium-node:
+    image: threefoldtech/mycelium:latest
+    command: |
+      mycelium --config /etc/mycelium/config.toml
+      --peers tcp://188.40.132.242:9651
+      --api-addr 0.0.0.0:8989
+    volumes:
+      - type: bind
+        source: ./config/mycelium.toml
+        target: /etc/mycelium/config.toml
+      - mycelium_data:/var/lib/mycelium
+    ports:
+      - "9651:9651"
+      - "8989:8989"
+    networks:
+      - backend
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+
+  matrix-bridge:
+    build:
+      context: ./backend/matrix-bridge
+      dockerfile: Dockerfile.prod
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres/mycelium_matrix
+      MYCELIUM_API_URL: http://mycelium-node:8989
+      RUST_LOG: info
+    depends_on:
+      - postgres
+      - mycelium-node
+    networks:
+      - backend
+
+  web-gateway:
+    build:
+      context: ./backend/web-gateway
+      dockerfile: Dockerfile.prod
+    environment:
+      MATRIX_BRIDGE_URL: http://matrix-bridge:8080
+      FRONTEND_URL: http://frontend:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - matrix-bridge
+    networks:
+      - backend
+      - frontend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_BASE_URL: https://chat.threefold.pro
+        REACT_APP_MATRIX_BASE_URL: https://chat.threefold.pro
+    networks:
+      - frontend
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: ./config/nginx.conf
+        target: /etc/nginx/nginx.conf
+      - type: bind
+        source: ./ssl
+        target: /etc/nginx/ssl
+    depends_on:
+      - web-gateway
+      - frontend
+    networks:
+      - frontend
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mycelium_data:

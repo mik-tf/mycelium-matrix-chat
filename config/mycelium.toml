@@ -1,0 +1,28 @@
+[network]
+listen_addr = "0.0.0.0:9651"
+
+# Peers to connect to
+peers = [
+    "tcp://188.40.132.242:9651",
+    "quic://185.69.166.8:9651",
+    "tcp://185.69.166.7:9651",
+    "quic://65.21.231.58:9651"
+]
+
+[api]
+# API server listen address
+listen_addr = "0.0.0.0:8989"
+
+# Enable message subsystem
+enable_message_api = true
+
+[logging]
+level = "info"
+format = "json"
+
+[storage]
+# Private key storage path
+private_key_path = "/var/lib/mycelium/private_key.bin"
+
+# Node database path
+database_path = "/var/lib/mycelium/node.db"
