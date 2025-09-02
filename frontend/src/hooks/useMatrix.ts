@@ -1,5 +1,6 @@
 import { createClient, MatrixClient } from 'matrix-js-sdk';
 import { useState, useEffect, useCallback } from 'react';
+import { myceliumService } from '../services/mycelium';
 
 export interface MatrixUser {
   userId: string;
@@ -13,24 +14,45 @@ export const useMatrix = () => {
   const [user, setUser] = useState<MatrixUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [myceliumDetected, setMyceliumDetected] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<'standard' | 'enhanced'>('standard');
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount and detect Mycelium
   useEffect(() => {
-    const stored = localStorage.getItem('matrix_user');
-    if (stored) {
-      const storedUser: MatrixUser = JSON.parse(stored);
-      setUser(storedUser);
-      // Recreate client
-      const matrixClient = createClient({
-        baseUrl: `https://${storedUser.serverName}`,
-        accessToken: storedUser.accessToken,
-        userId: storedUser.userId,
-        deviceId: storedUser.deviceId,
-      });
-      // Temporary direct connection to Matrix.org for testing
-      setClient(matrixClient);
-    }
-  }, []);
+    const initialize = async () => {
+      // Detect Mycelium availability
+      try {
+        const myceliumStatus = await myceliumService.detectMycelium();
+        setMyceliumDetected(myceliumStatus.detected);
+        setConnectionMode(myceliumStatus.detected ? 'enhanced' : 'standard');
+      } catch (error) {
+        console.error('Mycelium detection failed:', error);
+        setMyceliumDetected(false);
+        setConnectionMode('standard');
+      }
+
+      // Load stored user
+      const stored = localStorage.getItem('matrix_user');
+      if (stored) {
+        const storedUser: MatrixUser = JSON.parse(stored);
+        setUser(storedUser);
+        // Recreate client with appropriate base URL based on Mycelium availability
+        const baseUrl = myceliumDetected
+          ? 'http://localhost:8081' // Use Matrix Bridge for enhanced mode
+          : `https://${storedUser.serverName}`; // Direct connection for standard mode
+
+        const matrixClient = createClient({
+          baseUrl,
+          accessToken: storedUser.accessToken,
+          userId: storedUser.userId,
+          deviceId: storedUser.deviceId,
+        });
+        setClient(matrixClient);
+      }
+    };
+
+    initialize();
+  }, [myceliumDetected]);
 
   const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
     console.log('🔌 Starting login process...');
@@ -38,9 +60,18 @@ export const useMatrix = () => {
     setError(null);      // Clear any previous errors
 
     try {
-      const baseUrl = `https://${serverName}`;
+      // Determine connection mode based on Mycelium availability
+      const currentMyceliumStatus = await myceliumService.detectMycelium();
+      const useEnhancedMode = currentMyceliumStatus.detected;
+      setMyceliumDetected(useEnhancedMode);
+      setConnectionMode(useEnhancedMode ? 'enhanced' : 'standard');
 
-      console.log('🌐 Creating Matrix client with baseUrl:', baseUrl);
+      // Use Matrix Bridge for enhanced mode, direct connection for standard mode
+      const baseUrl = useEnhancedMode
+        ? 'http://localhost:8081' // Route through Matrix Bridge
+        : `https://${serverName}`; // Direct connection to homeserver
+
+      console.log('🌐 Creating Matrix client with baseUrl:', baseUrl, `(Mode: ${connectionMode})`);
       const matrixClient = createClient({ baseUrl });
 
       console.log('🔐 Attempting login...');
@@ -86,7 +117,7 @@ export const useMatrix = () => {
       setError(err.message || 'Login failed - check console for details');
       setIsLoading(false);
     }
-  }, []);
+  }, [connectionMode]);
 
   const logout = useCallback(async () => {
     if (client) {
@@ -104,5 +135,7 @@ export const useMatrix = () => {
     error,
     login,
     logout,
+    myceliumDetected,
+    connectionMode,
   };
 };

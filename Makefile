@@ -60,7 +60,7 @@ test-phase1: test-backend test-frontend test-integration test-database
 test-backend:
 	@echo "🔧 Testing Backend Infrastructure..."
 	@echo "  📡 Checking PostgreSQL..."
-	@docker ps | grep -q mycelium-postgres || (echo "  ❌ PostgreSQL not running" && exit 1)
+	@docker ps | grep -q mycelium-matrix-postgres || (echo "  ❌ PostgreSQL not running" && exit 1)
 	@echo "  ✅ PostgreSQL: RUNNING"
 	@echo ""
 	@echo "  🌐 Checking Web Gateway..."
@@ -102,11 +102,11 @@ test-integration:
 test-database:
 	@echo "💾 Testing Database Persistence..."
 	@echo "  📊 Checking database tables..."
-	@docker exec mycelium-postgres psql -U mycelium_user -d mycelium_matrix -c "SELECT tablename FROM pg_tables WHERE tablename LIKE '%';" 2>/dev/null | grep -q rooms || (echo "  ❌ Database tables missing" && exit 1)
+	@docker exec mycelium-matrix-postgres psql -U mycelium_user -d mycelium_matrix -c "SELECT tablename FROM pg_tables WHERE tablename LIKE '%';" 2>/dev/null | grep -q rooms || (echo "  ❌ Database tables missing" && exit 1)
 	@echo "  ✅ Database Tables: EXIST"
 	@echo ""
 	@echo "ℹ️  Manual testing: Create rooms and verify database entries:"
-	@echo "  docker exec -it mycelium-postgres psql -U mycelium_user -d mycelium_matrix -c 'SELECT * FROM rooms;'"
+	@echo "  docker exec -it mycelium-matrix-postgres psql -U mycelium_user -d mycelium_matrix -c 'SELECT * FROM rooms;'"
 	@echo ""
 
 # ===== ENVIRONMENT SETUP =====
@@ -141,7 +141,7 @@ setup-full: deep-clean
 	sleep 5
 	@echo ""
 	@echo "🔍 Verifying services..."
-	docker ps | grep mycelium-postgres > /dev/null && echo "✅ PostgreSQL: ACTIVE" || echo "❌ PostgreSQL: FAILED"
+	docker ps | grep mycelium-matrix-postgres > /dev/null && echo "✅ PostgreSQL: ACTIVE" || echo "❌ PostgreSQL: FAILED"
 	curl -s http://localhost:8080/ > /dev/null && echo "✅ Web Gateway (Rust): ACTIVE" || echo "❌ Web Gateway: FAILED"
 	curl -s http://localhost:5173/ | grep -q "html" && echo "✅ Frontend (React): ACTIVE" || echo "❌ Frontend: FAILED"
 	@echo ""
@@ -207,7 +207,7 @@ status:
 	@netstat -tuln 2>/dev/null | grep -q :5173 && echo "  ✅ Frontend:     localhost:5173" || echo "  ❌ Frontend:     localhost:5173"
 	@echo ""
 	@echo "💾 Database:"
-	@docker exec mycelium-postgres psql -U mycelium_user -d mycelium_matrix -c "SELECT COUNT(*) FROM rooms;" 2>/dev/null && echo "  ✅ Database: Connected" || echo "  ❌ Database: Connection failed"
+	@docker exec mycelium-matrix-postgres psql -U mycelium_user -d mycelium_matrix -c "SELECT COUNT(*) FROM rooms;" 2>/dev/null && echo "  ✅ Database: Connected" || echo "  ❌ Database: Connection failed"
 
 # ===== DEBUGGING & MAINTENANCE =====
 
@@ -256,11 +256,11 @@ setup-phase2-db:
 	@echo "⏳ Waiting for database to initialize completely..."
 	sleep 30
 	@echo "🔍 Testing database connection..."
-	docker ps | grep mycelium-postgres > /dev/null 2>&1 && echo "✅ Database container is running" || (echo "❌ Database container not found" && docker ps && exit 1)
-	docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database is accepting connections" || (echo "⚠️  Database still initializing..."
-	@echo "⏳ Waiting another 15s..."
-	sleep 15
-	docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database now ready" || echo "❌ Database failed to start properly")
+	docker ps | grep mycelium-matrix-postgres > /dev/null 2>&1 && echo "✅ Database container is running" || (echo "❌ Database container not found" && docker ps && exit 1)
+	docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database is accepting connections" || (echo "⚠️  Database still initializing..." \
+	&& @echo "⏳ Waiting another 15s..." \
+	&& sleep 15 \
+	&& docker exec mycelium-matrix-postgres pg_isready -U mycelium_user > /dev/null 2>&1 && echo "✅ Database now ready" || echo "❌ Database failed to start properly")
 	@echo "✅ Database setup complete"
 
 # Build Matrix Bridge only
@@ -304,7 +304,7 @@ setup-phase2-local: clean-phase2 setup-phase2-db build-bridge
 	@echo "🔍 Checking if bridge is listening on port 8081..."
 	if netstat -tuln 2>/dev/null | grep -q :8081; then \
 		echo "✅ Bridge listening on port 8081" ; \
-		if curl -s http://localhost:8081/api/health 2>/dev/null | grep -q "ok\|status\|active"; then \
+		if curl -s http://localhost:8081/health 2>/dev/null | grep -q "OK"; then \
 			echo "  ✅ Bridge API responding" ; \
 		else \
 			echo "  ⚠️  Bridge API not responding (may still initializing)" ; \
@@ -400,7 +400,7 @@ test-phase2: test-bridge test-mycelium test-federation test-matrix-org
 test-bridge:
 	@echo "🌉 Testing Matrix Bridge Service..."
 	@echo "  🔌 Checking Bridge connectivity..."
-	@curl -s http://localhost:8081/api/health > /dev/null && echo "  ✅ Bridge API:    localhost:8081/api" || (echo "  ❌ Bridge API failed" && exit 1)
+	@curl -s http://localhost:8081/health > /dev/null && echo "  ✅ Bridge API:    localhost:8081/health" || (echo "  ❌ Bridge API failed" && exit 1)
 	@echo "  🌐 Testing federation endpoints..."
 	@curl -s -X GET http://localhost:8081/api/federation/status > /dev/null && echo "  ✅ Federation:    ACTIVE" || echo "  ⚠️  Federation:    Initializing..."
 	@echo "  📊 Checking bridge logs..."

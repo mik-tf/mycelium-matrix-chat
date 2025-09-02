@@ -6,12 +6,10 @@ import { MessageInput } from './components/MessageInput';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { MyceliumStatus } from './components/MyceliumStatus';
 import { apiService } from './services/api';
+import { useMatrix } from './hooks/useMatrix';
 
 function App() {
-  const [user, setUser] = useState<any>(null);
-  const [client, setClient] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { client, user, isLoading, error, login, logout, myceliumDetected, connectionMode } = useMatrix();
   const [rooms, setRooms] = useState<any[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [newRoomName, setNewRoomName] = useState('');
@@ -24,64 +22,7 @@ function App() {
     console.log('App Debug - State changed! client:', client ? 'exists' : 'null');
   }, [user, isLoading, client]);
 
-  // Login function moved to App - now uses API service first
-  const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
-    console.log('🔌 API login starting...');
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // First, authenticate via our API gateway
-      console.log('🔗 Calling API login...');
-      const authResponse = await apiService.login({ username, password });
-
-      if (!authResponse.success || !authResponse.data) {
-        throw new Error(authResponse.error || 'API authentication failed');
-      }
-
-      console.log('✅ API login successful!', authResponse.data);
-
-      // Now create Matrix client for message synchronization
-      const matrixClient = createClient({
-        baseUrl: `https://${serverName}`,
-        accessToken: authResponse.data.access_token,
-        userId: authResponse.data.user_id,
-      });
-
-      // Set state with API data
-      const userData = {
-        userId: authResponse.data.user_id,
-        accessToken: authResponse.data.access_token,
-        serverName,
-        isApiAuthenticated: true,
-      };
-
-      console.log('👤 Setting user state:', userData);
-
-      // Set state - should trigger re-render
-      setUser(userData);
-      setClient(matrixClient);
-
-      await matrixClient.startClient();
-
-      console.log('✅ Matrix sync started and completed');
-
-    } catch (err: any) {
-      console.error('❌ App login error:', err);
-      setError(err.message || 'Authentication failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    if (client) {
-      await client.logout();
-      setClient(null);
-      setUser(null);
-      localStorage.removeItem('matrix_user');
-    }
-  }, [client]);
+  // Login and logout are now handled by useMatrix hook
 
   // Debug logging for state changes
   useEffect(() => {
@@ -134,11 +75,9 @@ function App() {
         setNewRoomName('');
       } else {
         console.error('❌ API room creation failed:', response.error);
-        setError(response.error || 'Failed to create room');
       }
     } catch (err: any) {
       console.error('❌ Room creation failed:', err);
-      setError(err.message || 'Failed to create room');
     }
   };
 
@@ -165,11 +104,9 @@ function App() {
         setRoomAliasOrId('');
       } else {
         console.error('❌ API room join failed:', response.error);
-        setError(response.error || 'Failed to join room');
       }
     } catch (err: any) {
       console.error('❌ Room join failed:', err);
-      setError(err.message || 'Failed to join room');
     }
   };
 
@@ -241,6 +178,11 @@ function App() {
             <div className="flex items-center space-x-2">
               <ConnectionStatus />
               <MyceliumStatus client={client ?? undefined} room={selectedRoom ?? undefined} />
+              {connectionMode === 'enhanced' && (
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                  Enhanced Mode
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-xs md:text-sm text-gray-600 truncate max-w-32 md:max-w-none">
