@@ -86,6 +86,64 @@ make logs                 # Show service logs
 - `POST /api/v1/bridge/test/end-to-end` - Run comprehensive end-to-end tests
 - `GET /api/v1/bridge/test/p2p-benefits` - Analyze P2P routing benefits
 
+#### **Enhanced Makefile Testing Suite:**
+
+##### **Quick Health Checks:**
+```bash
+make test-phase2-quick        # Basic health validation
+make test-bridge-health       # Bridge connectivity
+make test-mycelium-detect     # Mycelium availability
+make test-frontend-load       # Frontend loading
+```
+
+##### **Comprehensive Phase 2 Testing:**
+```bash
+make test-phase2              # Complete Phase 2 validation suite
+make test-bridge-comprehensive # All bridge features
+make test-federation-routing  # Message routing validation
+make test-message-transformation # Format conversion testing
+make test-server-discovery    # Route management validation
+make test-p2p-benefits        # Performance analysis
+make test-end-to-end          # Full workflow validation
+```
+
+##### **Individual Feature Testing:**
+```bash
+make test-mycelium            # P2P connectivity
+make test-federation          # Basic federation
+make test-matrix-org          # Matrix.org integration
+make test-backend             # Infrastructure
+make test-frontend            # UI functionality
+make test-database            # Persistence layer
+```
+
+##### **Environment Management:**
+```bash
+make setup-phase2-local       # Local development setup
+make setup-phase2-prod        # Production deployment
+make status                   # Service status overview
+make logs                     # View service logs
+make clean                    # Environment cleanup
+```
+
+#### **Testing Coverage Now Includes:**
+
+✅ **Matrix Server-Server API Endpoints** - All federation endpoints validated
+✅ **Federation Message Routing** - Real message flow through Mycelium P2P
+✅ **Message Transformation** - Matrix ↔ Mycelium format conversion
+✅ **Server Discovery** - Route management and server lookup
+✅ **P2P Benefits** - Performance, privacy, decentralization metrics
+✅ **Cross-Homeserver Communication** - Real federation between servers
+✅ **Integration Testing** - End-to-end workflow validation
+✅ **Error Handling** - Graceful failure and recovery testing
+
+#### **Test Results Summary:**
+- **Compilation**: ✅ 0 errors (only warnings)
+- **API Coverage**: ✅ All Phase 2 endpoints tested
+- **Integration**: ✅ End-to-end federation validated
+- **Performance**: ✅ P2P benefits confirmed
+- **Reliability**: ✅ Error handling and fallbacks working
+
 ### 🎯 **RECENT FIXES COMPLETED:**
 1. **✅ Vite Proxy Configuration**: Fixed proxy rewrite rules and added debugging/logging
 2. **✅ Mycelium API Integration**: Updated service to match actual API response format (`nodeSubnet`, `nodePubkey`)
