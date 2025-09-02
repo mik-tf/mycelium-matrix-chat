@@ -10,6 +10,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path, // Don't rewrite, let the gateway handle it
       },
+      '/api/mycelium': {
+        target: 'http://localhost:8989',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/mycelium/, '/api/v1'),
+      },
     },
   },
 })

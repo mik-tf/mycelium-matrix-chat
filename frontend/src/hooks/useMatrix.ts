@@ -20,26 +20,32 @@ export const useMatrix = () => {
   // Load user from localStorage on mount and detect Mycelium
   useEffect(() => {
     const initialize = async () => {
-      // Detect Mycelium availability
+      // Detect Mycelium availability first
+      let detected = false;
       try {
         const myceliumStatus = await myceliumService.detectMycelium();
-        setMyceliumDetected(myceliumStatus.detected);
-        setConnectionMode(myceliumStatus.detected ? 'enhanced' : 'standard');
+        detected = myceliumStatus.detected;
+        setMyceliumDetected(detected);
+        setConnectionMode(detected ? 'enhanced' : 'standard');
+        console.log('🔍 Mycelium detection result:', myceliumStatus);
       } catch (error) {
         console.error('Mycelium detection failed:', error);
         setMyceliumDetected(false);
         setConnectionMode('standard');
       }
 
-      // Load stored user
+      // Load stored user and create client with correct baseUrl
       const stored = localStorage.getItem('matrix_user');
       if (stored) {
         const storedUser: MatrixUser = JSON.parse(stored);
         setUser(storedUser);
-        // Recreate client with appropriate base URL based on Mycelium availability
-        const baseUrl = myceliumDetected
+
+        // Use the detected value directly instead of state
+        const baseUrl = detected
           ? 'http://localhost:8081' // Use Matrix Bridge for enhanced mode
           : `https://${storedUser.serverName}`; // Direct connection for standard mode
+
+        console.log('🌐 Creating Matrix client with baseUrl:', baseUrl);
 
         const matrixClient = createClient({
           baseUrl,
@@ -52,7 +58,7 @@ export const useMatrix = () => {
     };
 
     initialize();
-  }, [myceliumDetected]);
+  }, []); // Empty dependency array
 
   const login = useCallback(async (username: string, password: string, serverName: string = 'matrix.org') => {
     console.log('🔌 Starting login process...');

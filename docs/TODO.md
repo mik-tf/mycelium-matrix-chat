@@ -21,6 +21,8 @@ dd # Implementation TODO List
 4. **Updated App.tsx** - Integration with enhanced Matrix client
 5. **Enhanced Makefile** - Added `test-phase2-quick`, `test-end-to-end`, and improved process detection
 6. **Fixed Container Names** - Corrected PostgreSQL container name references in Makefile
+7. **CORS Fix** - Added Vite proxy configuration for Mycelium API to resolve browser CORS issues
+8. **Async Logic Fix** - Fixed useMatrix hook dependency issues and async Mycelium detection
 
 ---
 

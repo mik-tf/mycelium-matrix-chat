@@ -5,7 +5,7 @@
  * interface to Mycelium P2P networking capabilities
  */
 
-const MYCELIUM_API_BASE = 'http://localhost:8989';
+const MYCELIUM_API_BASE = '/api/mycelium';
 
 export interface MyceliumStatus {
   detected: boolean;
