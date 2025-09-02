@@ -28,13 +28,17 @@ dd # Implementation TODO List
 - ✅ **Matrix Bridge**: Running and responding on localhost:8081
 - ✅ **Mycelium Detection**: Working via direct API calls (curl test passes)
 - ✅ **Frontend Server**: Running on localhost:5173 (visible in browser)
-- ⚠️ **Vite Proxy**: Not working correctly (browser can't access Mycelium API)
-- ⚠️ **Browser Detection**: Frontend shows "Mycelium not detected" due to proxy issue
+- ✅ **Vite Proxy**: FIXED - Browser can now access Mycelium API through proxy
+- ✅ **Browser Detection**: Frontend correctly detects Mycelium and shows "Mycelium Enhanced"
 
-### 🎯 **REMAINING ISSUES:**
-1. **Vite Proxy Configuration**: Browser requests to `/api/mycelium` are not being proxied to localhost:8989
-2. **Frontend Test**: Curl command fails but frontend is actually working in browser
-3. **Browser Detection**: Mycelium detection works via curl but not in browser due to proxy
+### 🎯 **RECENT FIXES COMPLETED:**
+1. **✅ Vite Proxy Configuration**: Fixed proxy rewrite rules and added debugging/logging
+2. **✅ Mycelium API Integration**: Updated service to match actual API response format (`nodeSubnet`, `nodePubkey`)
+3. **✅ Error Handling**: Added graceful handling of missing `/api/v1/peers` endpoint (returns 404)
+4. **✅ Browser CORS**: Ensured proxy handles cross-origin requests properly with `changeOrigin: true`
+5. **✅ Test Suite**: All `make test-phase2-quick` tests now pass consistently
+6. **✅ Frontend Service**: Updated `MyceliumService.detectMycelium()` to handle actual API responses
+7. **✅ Proxy Debugging**: Added comprehensive logging to track all proxy requests/responses
 
 ---
 
