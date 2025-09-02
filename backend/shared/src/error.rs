@@ -13,6 +13,9 @@ pub enum BridgeError {
     #[error("Mycelium network error: {message}")]
     MyceliumNetwork { message: String },
 
+    #[error("Mycelium API error: {message}")]
+    MyceliumApi { message: String },
+
     #[error("Database error: {message}")]
     Database { message: String },
 
@@ -43,6 +46,7 @@ impl IntoResponse for BridgeError {
         let (status, message) = match self {
             BridgeError::MatrixApi { .. } => (StatusCode::BAD_GATEWAY, self.to_string()),
             BridgeError::MyceliumNetwork { .. } => (StatusCode::SERVICE_UNAVAILABLE, self.to_string()),
+            BridgeError::MyceliumApi { .. } => (StatusCode::BAD_GATEWAY, self.to_string()),
             BridgeError::Database { .. } => (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string()),
             BridgeError::Config { .. } => (StatusCode::INTERNAL_SERVER_ERROR, "Configuration error".to_string()),
             BridgeError::Serde { .. } => (StatusCode::BAD_REQUEST, "Invalid data format".to_string()),
