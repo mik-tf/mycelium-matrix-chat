@@ -53,6 +53,39 @@
 - ✅ **Cross-Homeserver Communication**: Testing framework implemented with performance metrics
 - ✅ **P2P Message Routing**: Messages route through Mycelium network with fallback to Matrix
 
+### 🧪 **TESTING CAPABILITIES (Makefile Commands):**
+
+#### **Quick Health Checks:**
+```bash
+make test-phase2-quick    # Health check all Phase 2 components
+make test-bridge-health   # Just bridge health check
+make test-mycelium-detect # Just Mycelium detection check
+make test-frontend-load   # Just frontend loading check
+```
+
+#### **Complete Testing Suites:**
+```bash
+make test-phase2          # Full Phase 2 testing suite
+make test-end-to-end      # Complete end-to-end test flow
+make test-bridge          # Matrix Bridge service testing
+make test-mycelium        # Mycelium P2P connectivity testing
+make test-federation      # Federation routing testing
+make test-matrix-org      # Matrix.org federation integration
+```
+
+#### **Environment Setup:**
+```bash
+make setup-phase2-local   # Setup Phase 2 Bridge + Mycelium (localhost:8081)
+make setup-phase2-prod    # Deploy Phase 2 to production
+make status               # Show current service status
+make logs                 # Show service logs
+```
+
+#### **Available Test Endpoints:**
+- `GET /api/v1/bridge/test/federation/{server_name}` - Test federation with specific server
+- `POST /api/v1/bridge/test/end-to-end` - Run comprehensive end-to-end tests
+- `GET /api/v1/bridge/test/p2p-benefits` - Analyze P2P routing benefits
+
 ### 🎯 **RECENT FIXES COMPLETED:**
 1. **✅ Vite Proxy Configuration**: Fixed proxy rewrite rules and added debugging/logging
 2. **✅ Mycelium API Integration**: Updated service to match actual API response format (`nodeSubnet`, `nodePubkey`)
