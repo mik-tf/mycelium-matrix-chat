@@ -63,11 +63,13 @@ help:
 	@echo "📚 Documentation:"
 	@echo "  docs                  # Open Phase 1 testing documentation"
 	@echo "  docs-phase2           # Open Phase 2 deployment documentation"
+	@echo "  docs-tfgrid           # Open ThreeFold Grid deployment guide"
 	@echo "  docs-dns              # Open DNS setup documentation"
 	@echo ""
 	@echo "📗 For detailed setup instructions:"
 	@echo "  Phase 1: ./docs/ops/phase-1-test.md"
 	@echo "  Phase 2: ./docs/ops/phase-2-deploy.md"
+	@echo "  TF Grid Deployment: ./docs/ops/tfgrid-deployment.md"
 	@echo "  Production: ./docs/ops/production-deployment.md"
 	@echo "  DNS Setup: ./docs/ops/dns-setup.md"
 
@@ -285,6 +287,20 @@ docs-dns:
 		start ./docs/ops/dns-setup.md &
 	else \
 		echo "Please open ./docs/ops/dns-setup.md in your preferred text editor"; \
+	fi
+
+# Open ThreeFold Grid deployment documentation
+docs-tfgrid:
+	@echo "📚 Opening ThreeFold Grid Deployment Guide..."
+	@echo "File: ./docs/ops/tfgrid-deployment.md"
+	if command -v xdg-open > /dev/null; then \
+		xdg-open ./docs/ops/tfgrid-deployment.md 2>/dev/null & \
+	elif command -v open > /dev/null; then \
+		open ./docs/ops/tfgrid-deployment.md &
+	elif command -v start > /dev/null; then \
+		start ./docs/ops/tfgrid-deployment.md &
+	else \
+		echo "Please open ./docs/ops/tfgrid-deployment.md in your preferred text editor"; \
 	fi
 
 # ===== PHASE 2 TARGETS =====
