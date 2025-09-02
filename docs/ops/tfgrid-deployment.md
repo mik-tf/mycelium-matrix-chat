@@ -40,25 +40,92 @@ This guide provides step-by-step instructions for deploying the Mycelium-Matrix 
    - Click "Deploy"
    - Wait for deployment to complete (usually 2-3 minutes)
 
-## Step 2: Access Your VM via Mycelium
+## Step 2: Configure Mycelium Network
 
 ### Find Your Mycelium Connection Details
 
 After deployment, you'll see:
 - **Mycelium IP**: Something like `400::abcd:1234:5678:9abc`
-- **SSH Command**: `ssh mycelium@400::abcd:1234:5678:9abc`
+- **Note**: This is the IPv6 address you'll use to SSH into your VM
+
+### Configure Mycelium Peers (Required First)
+
+Before you can SSH into your VM, you need to configure Mycelium peers on your **local machine** to establish the P2P network:
+
+```bash
+# Configure Mycelium with working peers
+sudo mycelium --peers \
+  tcp://188.40.132.242:9651 \
+  "quic://[2a01:4f8:212:fa6::2]:9651" \
+  tcp://185.69.166.7:9651 \
+  "quic://[2a02:1802:5e:0:ec4:7aff:fe51:e36b]:9651" \
+  tcp://65.21.231.58:9651 \
+  "quic://[2a01:4f9:5a:1042::2]:9651" \
+  "tcp://[2604:a00:50:17b:9e6b:ff:fe1f:e054]:9651" \
+  quic://5.78.122.16:9651 \
+  "tcp://[2a01:4ff:2f0:3621::1]:9651" \
+  quic://142.93.217.194:9651 \
+  --tun-name mycelium0
+```
+
+**Important**: Run this command on your **local machine**, not on the VM. This establishes the Mycelium P2P network that allows you to connect to your VM.
+
+### Verify Mycelium Connection
+
+```bash
+# Check if Mycelium is running and connected
+mycelium status
+
+# You should see output indicating peers are connected
+```
+
+## Step 3: Access Your VM via Mycelium
 
 ### Connect via SSH
 
+Now that Mycelium is configured and connected, you can SSH into your VM:
+
 ```bash
 # SSH into your VM using Mycelium
-ssh mycelium@[YOUR_MYCELIUM_IP]
+ssh root@[YOUR_MYCELIUM_IP]
 
 # Example:
-ssh mycelium@400::abcd:1234:5678:9abc
+ssh root@44a:1bca:f2:c72d:ff0f:0:200:2
 ```
 
 **Note**: The first connection might take a few seconds as Mycelium establishes the P2P connection.
+
+### VSCode Remote SSH Configuration
+
+For VSCode Remote Explorer to work properly with Mycelium IPv6 addresses:
+
+#### Working SSH Config (No Brackets Needed)
+```bash
+# Add to ~/.ssh/config
+Host mycelium-chat
+    HostName [YOUR_MYCELIUM_IP]
+    User root
+    IdentityFile ~/.ssh/id_ed25519
+
+# Example:
+Host mycelium-chat
+    HostName 44a:1bca:f2:c72d:ff0f:0:200:2
+    User root
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+#### Connect in VSCode
+1. Open VSCode
+2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+3. Type "Remote-SSH: Connect to Host..."
+4. Select `mycelium-chat` from the list
+5. VSCode will open the remote explorer
+
+#### Alternative Direct Connection
+If the hostname doesn't work, connect directly:
+```
+ssh root@[YOUR_MYCELIUM_IP]
+```
 
 ### Verify Connection
 
