@@ -13,7 +13,7 @@ export default defineConfig({
       '/api/mycelium': {
         target: 'http://localhost:8989',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/mycelium/, '/api/v1'),
+        rewrite: (path) => path.replace(/^\/api\/mycelium/, ''),
       },
     },
   },

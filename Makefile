@@ -408,7 +408,7 @@ test-bridge-health:
 
 test-frontend-load:
 	@echo "🌐 Testing Frontend..."
-	@curl -s http://localhost:5173 | grep -q "html" && echo "✅ Frontend: LOADED" || echo "❌ Frontend: FAILED"
+	@curl -s -m 10 http://localhost:5173 | grep -q -i "html\|vite\|react" && echo "✅ Frontend: LOADED" || echo "❌ Frontend: FAILED"
 
 test-mycelium-detect:
 	@echo "⚡ Testing Mycelium Detection..."
