@@ -11,12 +11,16 @@ dd # Implementation TODO List
 - **📊 Real-time UI**: Enhanced status components showing connection quality and peer count
 - **⚡ P2P Routing Logic**: useMatrix hook automatically switches between standard/enhanced modes
 - **🔗 Bridge Integration**: Frontend properly routes through localhost:8081 when Mycelium available
+- **🧪 Enhanced Testing**: Added quick test targets to Makefile for rapid validation
+- **🔧 Fixed PID Capture**: Improved process detection in Makefile for reliable bridge monitoring
 
 ### ✅ **IMPLEMENTED COMPONENTS:**
 1. **Mycelium Service** (`frontend/src/services/mycelium.ts`) - Detection and API client
 2. **Enhanced MyceliumStatus** (`frontend/src/components/MyceliumStatus.tsx`) - Real-time status display
 3. **Smart useMatrix Hook** (`frontend/src/hooks/useMatrix.ts`) - Automatic mode switching
 4. **Updated App.tsx** - Integration with enhanced Matrix client
+5. **Enhanced Makefile** - Added `test-phase2-quick`, `test-end-to-end`, and improved process detection
+6. **Fixed Container Names** - Corrected PostgreSQL container name references in Makefile
 
 ---
 
