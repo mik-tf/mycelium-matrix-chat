@@ -285,9 +285,9 @@ setup-phase2-local: clean-phase2 setup-phase2-db build-bridge
 	@echo "🌉⚡ Starting Matrix Bridge (localhost:8081) with logging..."
 	@echo "📝 Bridge output will be shown HERE (realtime):"
 	@touch /tmp/bridge.log
-	./target/release/matrix-bridge 2>&1 | tee /tmp/bridge.log &
-	BRIDGE_PID=$$! && echo "$$BRIDGE_PID" > /tmp/matrix-bridge.pid
-	@echo "Bridge PID: $$BRIDGE_PID"
+	@./target/release/matrix-bridge > /tmp/bridge.log 2>&1 &
+	@sleep 1
+	@BRIDGE_PID=$$(pgrep -f "matrix-bridge") && echo "$$BRIDGE_PID" > /tmp/matrix-bridge.pid && echo "Bridge PID: $$BRIDGE_PID" || echo "Bridge PID: (could not capture)"
 	@echo "📝 Bridge log file: /tmp/bridge.log"
 	@echo "Waiting 10s for bridge to fully initialize..."
 	sleep 10
@@ -385,6 +385,31 @@ deploy-prod:
 	@echo "📊 Status: https://chat.threefold.pro/status"
 
 # ===== PHASE 2 TESTING =====
+
+# Quick test targets for Phase 2
+test-phase2-quick: test-bridge-health test-frontend-load test-mycelium-detect
+
+test-bridge-health:
+	@echo "🌉 Testing Matrix Bridge..."
+	@curl -s http://localhost:8081/health | grep -q "OK" && echo "✅ Bridge: OK" || echo "❌ Bridge: FAILED"
+
+test-frontend-load:
+	@echo "🌐 Testing Frontend..."
+	@curl -s http://localhost:5173 | grep -q "html" && echo "✅ Frontend: LOADED" || echo "❌ Frontend: FAILED"
+
+test-mycelium-detect:
+	@echo "⚡ Testing Mycelium Detection..."
+	@curl -s http://localhost:8989/api/v1/admin > /dev/null 2>&1 && echo "✅ Mycelium: DETECTED" || echo "⚠️ Mycelium: NOT FOUND (expected if not installed)"
+
+test-end-to-end:
+	@echo "🔄 Testing End-to-End Flow..."
+	@echo "1. Bridge health check..."
+	@make test-bridge-health
+	@echo "2. Frontend loading..."
+	@make test-frontend-load
+	@echo "3. Mycelium detection..."
+	@make test-mycelium-detect
+	@echo "✅ End-to-end test complete!"
 
 # Complete Phase 2 testing suite
 test-phase2: test-bridge test-mycelium test-federation test-matrix-org
