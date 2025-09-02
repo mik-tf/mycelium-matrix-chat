@@ -14,6 +14,17 @@ export default defineConfig({
         target: 'http://localhost:8989',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/mycelium/, ''),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending Request to Mycelium:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Received Response from Mycelium:', proxyRes.statusCode, req.url);
+          });
+        },
       },
     },
   },
