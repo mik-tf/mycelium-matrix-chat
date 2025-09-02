@@ -2,7 +2,7 @@
 # Mycelium-Matrix Integration Project - Makefile
 #
 
-.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect deploy-prod down clean logs logs-phase2 status
+.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod down clean logs logs-phase2 status
 
 # Default target
 help:
@@ -52,13 +52,24 @@ help:
 	@echo "  logs               # Show service logs"
 	@echo "  logs-phase2        # Show Phase 2 service logs only"
 	@echo ""
+	@echo "🚀 Production Operations:"
+	@echo "  ops-production         # Deploy to production (ThreeFold Grid)"
+	@echo "  ops-production-dry     # Dry run production deployment"
+	@echo "  ops-production-rollback # Rollback production deployment"
+	@echo "  ops-status            # Production status overview"
+	@echo "  ops-logs             # Production service logs"
+	@echo "  ops-backup           # Production backup"
+	@echo ""
 	@echo "📚 Documentation:"
-	@echo "  docs               # Open Phase 1 testing documentation"
-	@echo "  docs-phase2        # Open Phase 2 deployment documentation"
+	@echo "  docs                  # Open Phase 1 testing documentation"
+	@echo "  docs-phase2           # Open Phase 2 deployment documentation"
+	@echo "  docs-dns              # Open DNS setup documentation"
 	@echo ""
 	@echo "📗 For detailed setup instructions:"
 	@echo "  Phase 1: ./docs/ops/phase-1-test.md"
 	@echo "  Phase 2: ./docs/ops/phase-2-deploy.md"
+	@echo "  Production: ./docs/ops/production-deployment.md"
+	@echo "  DNS Setup: ./docs/ops/dns-setup.md"
 
 # ===== TESTING TARGETS =====
 
@@ -260,6 +271,20 @@ docs:
 		start ./docs/ops/phase-1-test.md &
 	else \
 		echo "Please open ./docs/ops/phase-1-test.md in your preferred text editor"; \
+	fi
+
+# Open DNS setup documentation
+docs-dns:
+	@echo "📚 Opening DNS Setup Documentation..."
+	@echo "File: ./docs/ops/dns-setup.md"
+	if command -v xdg-open > /dev/null; then \
+		xdg-open ./docs/ops/dns-setup.md 2>/dev/null & \
+	elif command -v open > /dev/null; then \
+		open ./docs/ops/dns-setup.md &
+	elif command -v start > /dev/null; then \
+		start ./docs/ops/dns-setup.md &
+	else \
+		echo "Please open ./docs/ops/dns-setup.md in your preferred text editor"; \
 	fi
 
 # ===== PHASE 2 TARGETS =====
@@ -497,6 +522,153 @@ test-matrix-org:
 	@echo ""
 	@echo "🔍 Current Status:"
 	@curl -k -s -I https://chat.threefold.pro/_matrix/federation/v1/version | grep -q "200\|301" && echo "  ✅ Federation Ready" || echo "  ❌ Federation Endpoint not responding"
+
+# ===== PRODUCTION OPERATIONS =====
+
+# Main production deployment - runs the automated deployment script
+ops-production:
+	@echo "🚀 Starting Mycelium-Matrix Chat Production Deployment..."
+	@echo ""
+	@echo "📋 Deployment Overview:"
+	@echo "  Domain: chat.projectmycelium.org"
+	@echo "  Script: ./scripts/deployment-prod.sh"
+	@echo "  Target: Ubuntu 24.04 on ThreeFold Grid"
+	@echo ""
+	@echo "🔧 Pre-deployment Checklist:"
+	@echo "  ✅ ThreeFold Grid VM deployed with Ubuntu 24.04"
+	@echo "  ✅ Mycelium P2P network configured"
+	@echo "  ✅ SSH access via Mycelium established"
+	@echo "  ✅ Domain chat.projectmycelium.org registered"
+	@echo "  ✅ DNS A record configured to VM IP"
+	@echo ""
+	@echo "⚠️  IMPORTANT: Run this command ON the ThreeFold Grid VM"
+	@echo "   Not on your local machine!"
+	@echo ""
+	@read -p "Are you running this on the ThreeFold Grid VM? (y/N): " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "❌ Deployment cancelled. Please run on the ThreeFold Grid VM."; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "🔄 Executing production deployment script..."
+	./scripts/deployment-prod.sh
+
+# Dry run - show what would be deployed without making changes
+ops-production-dry:
+	@echo "🔍 Production Deployment Dry Run"
+	@echo "This will show what would be installed without making changes"
+	@echo ""
+	./scripts/deployment-prod.sh --dry-run
+
+# Rollback production deployment
+ops-production-rollback:
+	@echo "🔄 Rolling back production deployment..."
+	@echo ""
+	@echo "⚠️  This will:"
+	@echo "  - Stop all services"
+	@echo "  - Remove systemd services"
+	@echo "  - Keep data and configurations"
+	@echo ""
+	@read -p "Continue with rollback? (y/N): " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "❌ Rollback cancelled."; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "🛑 Stopping services..."
+	-sudo systemctl stop matrix-bridge 2>/dev/null || true
+	-sudo systemctl stop web-gateway 2>/dev/null || true
+	-sudo systemctl stop mycelium-frontend 2>/dev/null || true
+	-sudo systemctl stop nginx 2>/dev/null || true
+	@echo ""
+	@echo "🗑️  Removing systemd services..."
+	-sudo systemctl disable matrix-bridge 2>/dev/null || true
+	-sudo systemctl disable web-gateway 2>/dev/null || true
+	-sudo systemctl disable mycelium-frontend 2>/dev/null || true
+	-sudo rm -f /etc/systemd/system/matrix-bridge.service
+	-sudo rm -f /etc/systemd/system/web-gateway.service
+	-sudo rm -f /etc/systemd/system/mycelium-frontend.service
+	-sudo systemctl daemon-reload
+	@echo ""
+	@echo "✅ Rollback complete. Services stopped and removed."
+	@echo "💡 Data and configurations preserved for potential redeployment."
+
+# Production status check
+ops-status:
+	@echo "📊 Production Status Overview:"
+	@echo ""
+	@echo "🌐 Domain: chat.projectmycelium.org"
+	@echo ""
+	@echo "🔌 Network Services:"
+	@curl -s -k https://chat.projectmycelium.org/api/health > /dev/null && echo "  ✅ API Health: OK" || echo "  ❌ API Health: FAILED"
+	@curl -s -k https://chat.projectmycelium.org/_matrix/federation/v1/version > /dev/null && echo "  ✅ Federation API: OK" || echo "  ❌ Federation API: FAILED"
+	@curl -s -k https://chat.projectmycelium.org/ | grep -q "html" && echo "  ✅ Frontend: OK" || echo "  ❌ Frontend: FAILED"
+	@echo ""
+	@echo "🐳 System Services:"
+	@systemctl is-active --quiet matrix-bridge && echo "  ✅ Matrix Bridge: RUNNING" || echo "  ❌ Matrix Bridge: STOPPED"
+	@systemctl is-active --quiet web-gateway && echo "  ✅ Web Gateway: RUNNING" || echo "  ❌ Web Gateway: STOPPED"
+	@systemctl is-active --quiet mycelium-frontend && echo "  ✅ Frontend Service: RUNNING" || echo "  ❌ Frontend Service: STOPPED"
+	@systemctl is-active --quiet nginx && echo "  ✅ Nginx: RUNNING" || echo "  ❌ Nginx: STOPPED"
+	@systemctl is-active --quiet postgresql && echo "  ✅ PostgreSQL: RUNNING" || echo "  ❌ PostgreSQL: STOPPED"
+	@echo ""
+	@echo "⚡ Mycelium P2P:"
+	@curl -s http://localhost:8989/api/v1/admin > /dev/null && echo "  ✅ Mycelium API: OK" || echo "  ❌ Mycelium API: FAILED"
+	@echo ""
+	@echo "💾 System Resources:"
+	@echo "  CPU: $$(uptime | awk -F'load average:' '{ print $$2 }' | cut -d, -f1 | xargs)"
+	@echo "  Memory: $$(free -h | grep '^Mem:' | awk '{print $$3 "/" $$2}')"
+	@echo "  Disk: $$(df -h / | tail -1 | awk '{print $$3 "/" $$2 " (" $$5 ")"}')"
+
+# Production logs viewer
+ops-logs:
+	@echo "📋 Production Service Logs:"
+	@echo ""
+	@echo "🌉 Matrix Bridge Logs:"
+	@echo "  sudo journalctl -u matrix-bridge -f"
+	@echo ""
+	@echo "🌐 Web Gateway Logs:"
+	@echo "  sudo journalctl -u web-gateway -f"
+	@echo ""
+	@echo "💻 Frontend Service Logs:"
+	@echo "  sudo journalctl -u mycelium-frontend -f"
+	@echo ""
+	@echo "🌐 Nginx Logs:"
+	@echo "  sudo tail -f /var/log/nginx/access.log"
+	@echo "  sudo tail -f /var/log/nginx/error.log"
+	@echo ""
+	@echo "🐳 PostgreSQL Logs:"
+	@echo "  sudo tail -f /var/log/postgresql/postgresql-*.log"
+	@echo ""
+	@echo "📝 Deployment Logs:"
+	@echo "  sudo tail -f /var/log/mycelium-matrix-deployment.log"
+
+# Production backup
+ops-backup:
+	@echo "💾 Creating Production Backup..."
+	@echo ""
+	BACKUP_DIR="/opt/mycelium-matrix-backups/$$(date +%Y%m%d_%H%M%S)"
+	sudo mkdir -p "$$BACKUP_DIR"
+	@echo "📁 Backup directory: $$BACKUP_DIR"
+	@echo ""
+	@echo "💾 Backing up database..."
+	sudo -u postgres pg_dump mycelium_matrix > "$$BACKUP_DIR/database.sql"
+	@echo "✅ Database backup: $$BACKUP_DIR/database.sql"
+	@echo ""
+	@echo "📁 Backing up configurations..."
+	sudo cp -r /etc/nginx/sites-available/chat.projectmycelium.org "$$BACKUP_DIR/nginx.conf" 2>/dev/null || echo "⚠️  Nginx config not found"
+	sudo cp -r /etc/letsencrypt "$$BACKUP_DIR/ssl" 2>/dev/null || echo "⚠️  SSL certificates not found"
+	@echo "✅ Configurations backed up"
+	@echo ""
+	@echo "📊 Backup Summary:"
+	@echo "  Location: $$BACKUP_DIR"
+	@echo "  Size: $$(sudo du -sh "$$BACKUP_DIR" | cut -f1)"
+	@echo "  Files: $$(sudo find "$$BACKUP_DIR" -type f | wc -l)"
+	@echo ""
+	@echo "💡 To restore from backup:"
+	@echo "  sudo -u postgres psql < $$BACKUP_DIR/database.sql"
+	@echo "  sudo cp $$BACKUP_DIR/nginx.conf /etc/nginx/sites-available/chat.projectmycelium.org"
+	@echo ""
+	@echo "✅ Production backup complete!"
 
 # ===== PHASE 2 COMPREHENSIVE TESTING =====
 
