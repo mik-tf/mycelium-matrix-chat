@@ -304,11 +304,15 @@ setup-phase2-local: clean-phase2 setup-phase2-db build-bridge
 	sleep 10
 	@echo ""
 	@echo "🔍 Checking bridge status..."
-	if ps -p $$BRIDGE_PID > /dev/null 2>&1; then \
+	@if ps aux | grep -v grep | grep -q "matrix-bridge"; then \
+		BRIDGE_PID=$$(ps aux | grep -v grep | grep "matrix-bridge" | awk '{print $$2}') ; \
 		echo "✅ Matrix Bridge process running (PID: $$BRIDGE_PID)" ; \
+	elif netstat -tuln 2>/dev/null | grep -q :8081; then \
+		echo "✅ Matrix Bridge listening on port 8081 (process may have different name)" ; \
 	else \
-		echo "❌ Matrix Bridge process not found (may have crashed)" ; \
-		cat /tmp/bridge.log || echo "No log file available" ; \
+		echo "❌ Matrix Bridge process not found and port 8081 not listening" ; \
+		echo "📋 Recent bridge logs:" ; \
+		tail -10 /tmp/bridge.log 2>/dev/null || echo "No log file available" ; \
 		exit 1 ; \
 	fi
 	@echo ""
@@ -352,15 +356,13 @@ test-bridge-only:
 		echo "  ❌ Port 8081: Not listening" ; \
 	fi
 	@echo "  📐 Process status:"
-	@if [ -f /tmp/matrix-bridge.pid ]; then \
-		BRIDGE_PID=$$(cat /tmp/matrix-bridge.pid) ; \
-		if ps -p $$BRIDGE_PID > /dev/null 2>&1; then \
-			echo "  ✅ Bridge Process: Running (PID: $$BRIDGE_PID)" ; \
-		else \
-			echo "  ❌ Bridge Process: Not running" ; \
-		fi ; \
+	@if ps aux | grep -v grep | grep -q "matrix-bridge"; then \
+		BRIDGE_PID=$$(ps aux | grep -v grep | grep "matrix-bridge" | awk '{print $$2}') ; \
+		echo "  ✅ Bridge Process: Running (PID: $$BRIDGE_PID)" ; \
+	elif netstat -tuln 2>/dev/null | grep -q :8081; then \
+		echo "  ✅ Bridge Process: Listening on port 8081" ; \
 	else \
-		ps aux | grep -v grep | grep matrix-bridge && echo "  ✅ Bridge Process: Running" || echo "  ❌ Bridge Process: Not found" ; \
+		echo "  ❌ Bridge Process: Not found" ; \
 	fi
 	@echo ""
 	@echo "📋 Bridge logs:"
@@ -495,7 +497,11 @@ logs-phase2:
 	@echo "  docker-compose -f docker/docker-compose.prod.yml logs matrix-bridge"
 	@echo ""
 	@echo "🎯 Bridge Local logs:"
-	@echo "  tail -f /tmp/matrix-bridge.log 2>/dev/null || echo 'No local logs found'"
+	@if [ -f /tmp/matrix-bridge.pid ]; then \
+		ps -p $$(cat /tmp/matrix-bridge.pid) > /dev/null && echo "  Bridge process is running - check with ps aux | grep matrix-bridge"; \
+	else \
+		echo "  Bridge process not found - restart with make setup-phase2-local"; \
+	fi
 	@echo ""
 	@echo "Live logs for Phase 2 Bridge:"
 	@if [ -f /tmp/matrix-bridge.pid ]; then \
