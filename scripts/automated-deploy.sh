@@ -147,25 +147,57 @@ wait_for_vm_ready() {
 
         # Try SSH directly - since we know it works when the VM is ready
         log "DEBUG: Testing SSH connectivity to $mycelium_ip..."
-        if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=15 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
+
+        # Try with different SSH options to handle mycelium IPv6
+        if ssh -i "$HOME/.ssh/id_ed25519" \
+               -o ConnectTimeout=15 \
+               -o StrictHostKeyChecking=no \
+               -o UserKnownHostsFile=/dev/null \
+               -o LogLevel=INFO \
+               -o AddressFamily=inet6 \
+               "root@$mycelium_ip" "echo 'SSH ready'" 2>&1 | grep -q "SSH ready"; then
             success "VM is ready and SSH is accessible"
             return 0
         else
             log "❌ SSH not ready yet (this is normal during VM initialization)"
+            # Show the actual SSH error for debugging
+            ssh -i "$HOME/.ssh/id_ed25519" \
+                -o ConnectTimeout=5 \
+                -o StrictHostKeyChecking=no \
+                -o UserKnownHostsFile=/dev/null \
+                -o LogLevel=ERROR \
+                -o AddressFamily=inet6 \
+                "root@$mycelium_ip" "echo 'test'" 2>&1 | head -3 >&2
         fi
 
-        # Optional: Also try ping6 for additional info (but don't rely on it)
-        log "DEBUG: Also testing ping6 for reference..."
-        if ping6 -c 1 -W 3 "$mycelium_ip" >/dev/null 2>&1; then
-            log "ℹ️  IPv6 ping successful (but SSH not ready yet)"
+        # After 3 attempts, offer to proceed manually since user can SSH
+        if [ $attempt -eq 3 ]; then
+            log "⚠️  SSH detection is having issues, but you mentioned you can SSH manually."
+            log "💡 The VM may be ready despite the script not detecting it."
+            log "🔄 Continuing to test, but you can manually SSH and run deployment if needed."
+        fi
+
+        # After 10 attempts, be more aggressive with shorter waits
+        if [ $attempt -ge 10 ]; then
+            log "⏰ Been waiting a while... trying more frequently now."
+            sleep 10
         else
-            log "ℹ️  IPv6 ping failed (exit code: $?) - this may be environmental"
+            log "Waiting 30 seconds before next attempt..."
+            sleep 30
         fi
 
-        log "Waiting 30 seconds before next attempt..."
-        sleep 30
         ((attempt++))
     done
+
+    # If we get here, offer manual deployment option
+    log "⚠️  Automatic SSH detection failed, but the VM may still be ready."
+    log "💡 Since you can SSH manually, the VM is likely ready for deployment."
+    log "🔧 You can now manually SSH and run the deployment:"
+    log "   ssh root@$mycelium_ip"
+    log "   curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-remote.sh | bash -s $mycelium_ip"
+    log ""
+    log "❓ Or press Enter to exit the script and try manual deployment."
+    read -p "Press Enter to continue or Ctrl+C to exit..." -t 10
 
     die "VM did not become ready within $(($max_attempts * 30)) seconds"
 }
@@ -277,6 +309,39 @@ main() {
 
     if [ ! -f "$SSH_KEY_PATH" ]; then
         die "SSH public key not found at $SSH_KEY_PATH. Please generate SSH keys first."
+    fi
+
+    # Check and setup mycelium if needed
+    if ! command -v mycelium &> /dev/null; then
+        log "Mycelium client not found. Installing..."
+        # Try to install mycelium
+        if curl -fsSL https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-x86_64-unknown-linux-musl.tar.gz | tar -xz && sudo mv mycelium /usr/local/bin/; then
+            log "✅ Mycelium installed successfully"
+        else
+            warning "⚠️  Could not install mycelium automatically"
+        fi
+    fi
+
+    # Check if mycelium is running
+    if command -v mycelium &> /dev/null; then
+        log "Checking mycelium status..."
+        if ! mycelium status >/dev/null 2>&1; then
+            log "Mycelium not running. Attempting to start..."
+            # Try to start mycelium with common peers
+            nohup mycelium --peers \
+                tcp://188.40.132.242:9651 \
+                tcp://185.69.166.7:9651 \
+                tcp://65.21.231.58:9651 \
+                --tun-name mycelium0 >/dev/null 2>&1 &
+            sleep 3
+            if mycelium status >/dev/null 2>&1; then
+                log "✅ Mycelium started successfully"
+            else
+                warning "⚠️  Could not start mycelium automatically"
+            fi
+        else
+            log "✅ Mycelium is already running"
+        fi
     fi
 
     log "Configuration:"
