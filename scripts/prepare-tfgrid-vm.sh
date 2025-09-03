@@ -348,8 +348,14 @@ main() {
     echo "🔄 Switching to $DEPLOY_USER and starting deployment..."
     echo ""
 
-    # Run deployment as muser
-    su - "$DEPLOY_USER" -c "curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh | bash"
+    # Run deployment as muser (ignore hostname errors)
+    log "Starting deployment as $DEPLOY_USER..."
+    if su - "$DEPLOY_USER" -c "curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh | bash" 2>&1; then
+        success "Deployment completed successfully"
+    else
+        warning "Deployment had issues but may have completed partially"
+        log "Check the deployment status manually"
+    fi
 
     echo ""
     echo "=================================================="

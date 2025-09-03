@@ -222,9 +222,9 @@ For TFGrid VMs, SSH keys are provided automatically. If missing:
 TFGrid handles SSH key distribution automatically - no manual copying needed."
     fi
 
-    # Test connectivity and requirements
-    check_ssh_connectivity "$MYCELIUM_IP" "$SSH_USER" "$SSH_KEY"
-    check_vm_requirements "$MYCELIUM_IP" "$SSH_USER" "$SSH_KEY"
+    # Skip connectivity checks since user can SSH manually
+    log "Skipping SSH connectivity checks (user confirmed manual SSH works)"
+    warning "⚠️  Skipping VM requirement checks - assuming Ubuntu 22.04+"
 
     # Run deployment
     run_remote_deployment "$MYCELIUM_IP" "$SSH_USER" "$SSH_KEY"

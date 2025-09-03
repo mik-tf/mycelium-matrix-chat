@@ -464,7 +464,7 @@ deploy-automated:
 	@echo ""
 	@echo "💡 Custom options: ./scripts/automated-deploy.sh --help"
 	@echo ""
-	./scripts/automated-deploy.sh
+	bash ./scripts/automated-deploy.sh
 
 # ===== PHASE 2 TESTING =====
 

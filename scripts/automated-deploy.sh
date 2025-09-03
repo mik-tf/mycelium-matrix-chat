@@ -152,8 +152,8 @@ deploy_chat() {
 
     log "🚀 Deploying Mycelium-Matrix Chat to $mycelium_ip..."
 
-    # Use the existing remote deployment script
-    DEPLOY_CMD="curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-remote.sh | bash -s $mycelium_ip"
+    # Use the local remote deployment script (modified version)
+    DEPLOY_CMD="bash $(dirname "$0")/deploy-remote.sh $mycelium_ip"
 
     log "Running deployment command..."
     if eval "$DEPLOY_CMD"; then
