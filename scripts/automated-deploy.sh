@@ -23,6 +23,8 @@ MEMORY_GB=16
 DISK_GB=250
 NODE_ID=6883
 ENABLE_MYCELIUM=true
+FLIST="https://hub.grid.tf/tf-official-vms/ubuntu-24.04-full.flist"
+ENTRYPOINT="/sbin/zinit init"
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,7 +66,7 @@ deploy_vm() {
     log "🚀 Deploying VM using tfcmd..."
 
     # Build the tfcmd command
-    TFCMD_CMD="tfcmd deploy vm --name $VM_NAME --ssh $SSH_KEY_PATH --cpu $CPU_CORES --memory $MEMORY_GB --disk $DISK_GB --node $NODE_ID"
+    TFCMD_CMD="tfcmd deploy vm --flist $FLIST --entrypoint $ENTRYPOINT --name $VM_NAME --ssh $SSH_KEY_PATH --cpu $CPU_CORES --memory $MEMORY_GB --disk $DISK_GB --node $NODE_ID"
     if [ "$ENABLE_MYCELIUM" = true ]; then
         TFCMD_CMD="$TFCMD_CMD --mycelium true"
     fi
