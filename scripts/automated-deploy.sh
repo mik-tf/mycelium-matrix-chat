@@ -138,19 +138,29 @@ wait_for_vm_ready() {
 
     log "⏳ Waiting for VM to be ready (this may take a few minutes)..."
 
-    # Wait for SSH to be available
+    # Wait for both IPv6 connectivity and SSH to be available
     local max_attempts=30
     local attempt=1
 
     while [ $attempt -le $max_attempts ]; do
-        log "Attempt $attempt/$max_attempts: Testing SSH connectivity to $mycelium_ip..."
+        log "Attempt $attempt/$max_attempts: Testing connectivity to $mycelium_ip..."
 
-        if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
-            success "VM is ready and SSH is accessible"
-            return 0
+        # First check if IPv6 address is reachable with ping6
+        if ping6 -c 1 -W 5 "$mycelium_ip" >/dev/null 2>&1; then
+            log "✅ IPv6 ping successful"
+
+            # Now try SSH
+            if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
+                success "VM is ready and SSH is accessible"
+                return 0
+            else
+                log "⚠️  IPv6 reachable but SSH not ready yet"
+            fi
+        else
+            log "❌ IPv6 address not reachable yet"
         fi
 
-        log "SSH not ready yet, waiting 30 seconds..."
+        log "Waiting 30 seconds before next attempt..."
         sleep 30
         ((attempt++))
     done
