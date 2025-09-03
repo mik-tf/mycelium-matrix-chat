@@ -145,19 +145,21 @@ wait_for_vm_ready() {
     while [ $attempt -le $max_attempts ]; do
         log "Attempt $attempt/$max_attempts: Testing connectivity to $mycelium_ip..."
 
-        # First check if IPv6 address is reachable with ping6
-        if ping6 -c 1 -W 5 "$mycelium_ip" >/dev/null 2>&1; then
-            log "✅ IPv6 ping successful"
-
-            # Now try SSH
-            if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
-                success "VM is ready and SSH is accessible"
-                return 0
-            else
-                log "⚠️  IPv6 reachable but SSH not ready yet"
-            fi
+        # Try SSH directly - since we know it works when the VM is ready
+        log "DEBUG: Testing SSH connectivity to $mycelium_ip..."
+        if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=15 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
+            success "VM is ready and SSH is accessible"
+            return 0
         else
-            log "❌ IPv6 address not reachable yet"
+            log "❌ SSH not ready yet (this is normal during VM initialization)"
+        fi
+
+        # Optional: Also try ping6 for additional info (but don't rely on it)
+        log "DEBUG: Also testing ping6 for reference..."
+        if ping6 -c 1 -W 3 "$mycelium_ip" >/dev/null 2>&1; then
+            log "ℹ️  IPv6 ping successful (but SSH not ready yet)"
+        else
+            log "ℹ️  IPv6 ping failed (exit code: $?) - this may be environmental"
         fi
 
         log "Waiting 30 seconds before next attempt..."
