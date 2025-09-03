@@ -4,13 +4,21 @@
 
 This guide provides step-by-step instructions for deploying the Mycelium-Matrix Chat application on the ThreeFold Grid. The deployment process is automated and takes approximately 15-20 minutes.
 
-**🚀 Quick Start for TFGrid Users:**
-1. Deploy Ubuntu 24.04 VM with Mycelium on TFGrid
-2. Run: `curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh | bash`
-3. Switch to muser: `su - muser`
-4. Clone repo: `git clone https://github.com/mik-tf/mycelium-matrix-chat`
-5. Deploy: `cd mycelium-matrix-chat && make ops-production`
-6. Access at: `https://your-domain.com`
+**🚀 One-Command TFGrid Deployment:**
+
+```bash
+# 1. Deploy Ubuntu 24.04 VM with Mycelium on TFGrid Dashboard
+# 2. Run this single command (as root):
+curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh | bash
+```
+
+**That's it!** 🎉 The script will:
+- ✅ Set up `muser` with passwordless sudo
+- ✅ Install all prerequisites (Docker, Rust, Node.js, etc.)
+- ✅ Automatically switch to `muser` and deploy the application
+- ✅ Your Mycelium-Matrix Chat will be running!
+
+**Time Estimate:** 25-35 minutes total
 
 ## Prerequisites
 
@@ -210,14 +218,15 @@ cd mycelium-matrix-chat/scripts
 ./prepare-tfgrid-vm.sh
 ```
 
-**What the script does:**
-- ✅ Creates `muser` with sudo privileges
-- ✅ Installs all prerequisites (Docker, Rust, Node.js, etc.)
+**What the script does automatically:**
+- ✅ Creates `muser` with passwordless sudo privileges
+- ✅ Installs all prerequisites (Docker, Rust, Node.js, Mycelium, etc.)
 - ✅ Configures firewall and security
 - ✅ Verifies installation
-- ✅ Provides next steps
+- ✅ **Automatically switches to `muser` and deploys the application**
+- ✅ **Your Mycelium-Matrix Chat is running when it completes!**
 
-**Time Estimate:** ~10-15 minutes
+**Time Estimate:** 25-35 minutes (includes full deployment)
 
 After the script completes, switch to the deployment user:
 
@@ -657,12 +666,22 @@ sudo systemctl restart mycelium-frontend
 |------|--------|------|------|
 | 1 | Deploy Ubuntu 24.04 VM on TFGrid | 2-3 min | TFGrid Dashboard |
 | 2 | Configure Mycelium peers locally | 1-2 min | Local machine |
-| 3 | Run preparation script | 10-15 min | Root on VM |
-| 4 | Switch to muser & change password | 1 min | muser on VM |
-| 5 | Clone repository | 1-2 min | muser on VM |
-| 6 | Run deployment | 15-20 min | muser on VM |
-| 7 | Configure DNS (optional) | 5-10 min | Domain registrar |
-| **Total Time** | | **35-55 minutes** | |
+| 3 | **One-command deployment** | 25-30 min | Root → muser (automatic) |
+| 4 | Configure DNS (optional) | 5-10 min | Domain registrar |
+| **Total Time** | | **25-35 minutes** | |
+
+**🎯 One-Command Deployment:**
+```bash
+# Single command as root - handles everything automatically:
+curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh | bash
+```
+
+**What happens automatically:**
+- ✅ Creates `muser` with passwordless sudo
+- ✅ Installs all prerequisites
+- ✅ Switches to `muser` and clones repository
+- ✅ Builds and deploys the application
+- ✅ Starts all services
 
 **Security Notes:**
 - VM starts as root (TFGrid default)

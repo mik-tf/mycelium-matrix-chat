@@ -100,12 +100,14 @@ create_deploy_user() {
     # Add to sudo group
     usermod -aG sudo "$DEPLOY_USER"
 
-    # Set a default password (user should change this)
-    echo "$DEPLOY_USER:mycelium2024" | chpasswd
-    passwd -e "$DEPLOY_USER"  # Force password change on first login
+    # Configure passwordless sudo for the deploy user
+    echo "$DEPLOY_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$DEPLOY_USER
+    chmod 0440 /etc/sudoers.d/$DEPLOY_USER
 
-    success "Deployment user $DEPLOY_USER created with sudo privileges"
-    warning "Default password set to 'mycelium2024' - CHANGE THIS IMMEDIATELY!"
+    # Set no password for the user (passwordless login)
+    passwd -d "$DEPLOY_USER"
+
+    success "Deployment user $DEPLOY_USER created with passwordless sudo privileges"
 }
 
 # =====================================================================================
@@ -330,22 +332,28 @@ main() {
     verify_installation
 
     echo ""
-    echo "=================================================="
-    success "TFGrid VM preparation completed!"
+    echo "🚀 Next: Automatic deployment will begin..."
     echo ""
-    echo "📋 Next Steps:"
-    echo "  1. Switch to deployment user: su - $DEPLOY_USER"
-    echo "  2. Change the default password: passwd"
-    echo "  3. Clone the repository: git clone https://github.com/mik-tf/mycelium-matrix-chat"
-    echo "  4. Navigate to project: cd mycelium-matrix-chat"
-    echo "  5. Run deployment: make ops-production"
+
+    # Automatically switch to muser and run deployment
+    echo "🔄 Switching to $DEPLOY_USER and starting deployment..."
+    echo ""
+
+    # Run deployment as muser
+    su - "$DEPLOY_USER" -c "curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh | bash"
+
+    echo ""
+    echo "=================================================="
+    success "🎉 Complete TFGrid deployment finished!"
+    echo ""
+    echo "🌐 Your Mycelium-Matrix Chat is now running!"
+    echo "📊 Check status: su - $DEPLOY_USER -c 'cd mycelium-matrix-chat && make ops-status'"
+    echo "📋 View logs: su - $DEPLOY_USER -c 'cd mycelium-matrix-chat && make ops-logs'"
     echo ""
     echo "🔐 Security Notes:"
-    echo "  - Default password is 'mycelium2024' - CHANGE IT IMMEDIATELY"
-    echo "  - The $DEPLOY_USER has sudo privileges for system operations"
-    echo "  - Services will run as $DEPLOY_USER, not as root"
-    echo ""
-    echo "📊 Logs saved to: $LOG_FILE"
+    echo "  - $DEPLOY_USER has passwordless sudo for system operations"
+    echo "  - Services run as $DEPLOY_USER, not as root"
+    echo "  - All logs saved to: $LOG_FILE"
     echo "=================================================="
 }
 
