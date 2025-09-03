@@ -2,7 +2,7 @@
 # Mycelium-Matrix Integration Project - Makefile
 #
 
-.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-force-local ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod down clean logs logs-phase2 status
+.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-force-local ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod deploy-automated down clean logs logs-phase2 status
 
 # Default target
 help:
@@ -38,6 +38,7 @@ help:
 	@echo "  setup-phase2-local # Set up Phase 2 Bridge + Mycelium (localhost:8081)"
 	@echo "  setup-phase2-prod  # Deploy Phase 2 to production"
 	@echo "  deploy-prod        # Run production deployment script"
+	@echo "  deploy-automated   # Automated TFGrid deployment using tfcmd"
 	@echo "  down               # Stop all services"
 	@echo "  status             # Show service status"
 	@echo ""
@@ -443,6 +444,27 @@ deploy-prod:
 	@echo "🏠 Homepage: https://chat.threefold.pro"
 	@echo "🔧 API Docs: /docs/api"
 	@echo "📊 Status: https://chat.threefold.pro/status"
+
+# Automated TFGrid deployment using tfcmd
+deploy-automated:
+	@echo "🚀 Starting automated TFGrid deployment..."
+	@echo ""
+	@echo "📋 This will:"
+	@echo "  1. Deploy VM using tfcmd"
+	@echo "  2. Extract mycelium IP from output"
+	@echo "  3. Deploy Mycelium-Matrix Chat automatically"
+	@echo ""
+	@echo "⚙️  Default configuration:"
+	@echo "  - Name: myceliumchat"
+	@echo "  - CPU: 4 cores"
+	@echo "  - Memory: 16GB"
+	@echo "  - Disk: 250GB"
+	@echo "  - Node: 6883"
+	@echo "  - Mycelium: enabled"
+	@echo ""
+	@echo "💡 Custom options: ./scripts/automated-deploy.sh --help"
+	@echo ""
+	./scripts/automated-deploy.sh
 
 # ===== PHASE 2 TESTING =====
 

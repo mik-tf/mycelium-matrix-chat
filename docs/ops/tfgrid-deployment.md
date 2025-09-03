@@ -4,7 +4,39 @@
 
 This guide provides step-by-step instructions for deploying the Mycelium-Matrix Chat application on the ThreeFold Grid. The deployment process is automated and takes approximately 15-20 minutes.
 
-**🚀 Ultimate One-Liner (No Repo Required):**
+**🚀 New: Fully Automated One-Click Deployment (Recommended):**
+
+```bash
+# Single command to deploy everything automatically (no manual steps needed):
+./scripts/automated-deploy.sh
+```
+
+**What this does automatically:**
+- ✅ Deploy Ubuntu VM with Mycelium using tfcmd
+- ✅ Extract the mycelium IP from deployment output
+- ✅ Wait for VM to be ready
+- ✅ Deploy complete Mycelium-Matrix Chat application
+- ✅ Your application is running when it completes!
+
+**Default configuration:**
+- VM Name: myceliumchat
+- CPU: 4 cores, Memory: 16GB, Disk: 250GB
+- Node: 6883, Mycelium: enabled
+- SSH Key: ~/.ssh/id_ed25519.pub
+
+**Customization options:**
+```bash
+# Custom VM specifications
+./scripts/automated-deploy.sh --cpu 2 --memory 8 --disk 100
+
+# Custom name and node
+./scripts/automated-deploy.sh --name mychat --node 1234
+
+# All options
+./scripts/automated-deploy.sh --name mychat --cpu 2 --memory 8 --disk 100 --node 1234 --ssh-key ~/.ssh/custom_key.pub
+```
+
+**Legacy: Manual One-Liner (if you prefer manual VM deployment):**
 
 ```bash
 # 1. Deploy Ubuntu 24.04 VM with Mycelium on TFGrid Dashboard
@@ -29,6 +61,67 @@ curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/sc
 - SSH key (TFGrid provides this automatically)
 
 **Time Estimate:** 25-35 minutes total
+
+## Automated Deployment Process
+
+The new automated deployment script (`scripts/automated-deploy.sh`) streamlines the entire deployment process by:
+
+### Step 1: VM Deployment
+- Uses `tfcmd` to deploy a VM with your specified parameters
+- Automatically enables Mycelium networking
+- Configures SSH access with your public key
+
+### Step 2: IP Extraction
+- Parses the `tfcmd` output to extract the mycelium IPv6 address
+- Validates the IP format before proceeding
+
+### Step 3: VM Readiness Check
+- Waits for the VM to boot and become SSH accessible
+- Tests connectivity before attempting deployment
+
+### Step 4: Application Deployment
+- Downloads and runs the remote deployment script
+- Installs all prerequisites (Docker, Rust, Node.js, Mycelium)
+- Deploys the complete Mycelium-Matrix Chat application
+- Monitors deployment progress and reports completion
+
+### Configuration Options
+
+The automated script supports extensive customization:
+
+```bash
+# Basic usage with defaults
+./scripts/automated-deploy.sh
+
+# Custom VM specifications
+./scripts/automated-deploy.sh \
+  --name my-custom-chat \
+  --cpu 2 \
+  --memory 8 \
+  --disk 100 \
+  --node 1234 \
+  --ssh-key ~/.ssh/my_key.pub
+
+# Disable mycelium (not recommended)
+./scripts/automated-deploy.sh --no-mycelium
+```
+
+### Prerequisites for Automated Deployment
+
+- `tfcmd` installed and configured with your TFGrid account
+- SSH key pair (public key will be uploaded to VM)
+- Mycelium network connection (recommended)
+- Basic Linux tools (curl, bash, etc.)
+
+### Cleanup and Management
+
+```bash
+# Destroy the deployed VM
+tfcmd cancel myceliumchat
+
+# Or with custom name
+tfcmd cancel my-custom-chat
+```
 
 ## Prerequisites
 

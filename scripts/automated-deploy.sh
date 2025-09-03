@@ -1,0 +1,313 @@
+#!/bin/bash
+
+# =====================================================================================
+# Automated TFGrid Deployment Script for Mycelium-Matrix Chat
+# =====================================================================================
+# This script automates the complete deployment process:
+# 1. Deploy VM using tfcmd
+# 2. Extract mycelium IP from tfcmd output
+# 3. Deploy Mycelium-Matrix Chat using the remote deployment script
+# =====================================================================================
+
+set -e  # Exit on any error
+
+# =====================================================================================
+# Configuration
+# =====================================================================================
+
+# VM Deployment Parameters
+VM_NAME="myceliumchat"
+SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
+CPU_CORES=4
+MEMORY_GB=16
+DISK_GB=250
+NODE_ID=6883
+ENABLE_MYCELIUM=true
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# =====================================================================================
+# Utility Functions
+# =====================================================================================
+
+log() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*" >&2
+}
+
+success() {
+    echo -e "${GREEN}✅ $*${NC}" >&2
+}
+
+warning() {
+    echo -e "${YELLOW}⚠️  $*${NC}" >&2
+}
+
+error() {
+    echo -e "${RED}❌ $*${NC}" >&2
+}
+
+die() {
+    error "$*"
+    exit 1
+}
+
+# =====================================================================================
+# VM Deployment Functions
+# =====================================================================================
+
+deploy_vm() {
+    log "🚀 Deploying VM using tfcmd..."
+
+    # Build the tfcmd command
+    TFCMD_CMD="tfcmd deploy vm --name $VM_NAME --ssh $SSH_KEY_PATH --cpu $CPU_CORES --memory $MEMORY_GB --disk $DISK_GB --node $NODE_ID"
+    if [ "$ENABLE_MYCELIUM" = true ]; then
+        TFCMD_CMD="$TFCMD_CMD --mycelium true"
+    fi
+
+    log "Running: $TFCMD_CMD"
+
+    # Execute the command and capture output
+    TFCMD_OUTPUT=$(eval "$TFCMD_CMD" 2>&1)
+    TFCMD_EXIT_CODE=$?
+
+    echo "$TFCMD_OUTPUT" >&2
+
+    if [ $TFCMD_EXIT_CODE -ne 0 ]; then
+        die "VM deployment failed with exit code $TFCMD_EXIT_CODE"
+    fi
+
+    success "VM deployment initiated successfully"
+    echo "$TFCMD_OUTPUT"
+}
+
+extract_mycelium_ip() {
+    local output="$1"
+
+    log "🔍 Extracting mycelium IP from tfcmd output..."
+
+    # Look for the mycelium IP in the output
+    # Expected format: "vm mycelium ip: 474:e774:f93d:ceaf:ff0f:c3b3:b901:4da3"
+    MYCELIUM_IP=$(echo "$output" | grep -i "vm mycelium ip:" | sed 's/.*vm mycelium ip: *//' | tr -d '[:space:]' || true)
+
+    if [ -z "$MYCELIUM_IP" ]; then
+        # Try alternative patterns - look for IPv6-like patterns
+        MYCELIUM_IP=$(echo "$output" | grep -oE '[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}' | head -1 || true)
+    fi
+
+    if [ -z "$MYCELIUM_IP" ]; then
+        # Last resort: look for any pattern that looks like an IPv6 address
+        MYCELIUM_IP=$(echo "$output" | grep -oE '[0-9a-fA-F:]{10,}' | grep -E '^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$' | head -1 || true)
+    fi
+
+    if [ -z "$MYCELIUM_IP" ]; then
+        die "Could not extract mycelium IP from tfcmd output. Please check the output above."
+    fi
+
+    # Validate the IP format
+    # Remove any whitespace first
+    MYCELIUM_IP=$(echo "$MYCELIUM_IP" | tr -d '[:space:]')
+
+    # IPv6 validation: should contain only hex digits and colons
+    if [[ ! "$MYCELIUM_IP" =~ ^[0-9a-fA-F:]+$ ]]; then
+        die "Extracted IP '$MYCELIUM_IP' doesn't look like a valid IPv6 address"
+    fi
+
+    # Count colons - IPv6 should have exactly 7 colons
+    local colon_count=$(echo "$MYCELIUM_IP" | tr -cd ':' | wc -c)
+    if [ "$colon_count" -ne 7 ]; then
+        die "Invalid IPv6 format: '$MYCELIUM_IP' should have 7 colons, found $colon_count"
+    fi
+
+    # Additional validation: should start with a digit (typical for mycelium IPs)
+    if [[ ! "$MYCELIUM_IP" =~ ^[0-9a-fA-F] ]]; then
+        warning "IP '$MYCELIUM_IP' doesn't start with a hex digit - this might not be valid"
+    fi
+
+    success "Mycelium IP extracted: $MYCELIUM_IP"
+    echo "$MYCELIUM_IP"
+}
+
+wait_for_vm_ready() {
+    local mycelium_ip="$1"
+
+    log "⏳ Waiting for VM to be ready (this may take a few minutes)..."
+
+    # Wait for SSH to be available
+    local max_attempts=30
+    local attempt=1
+
+    while [ $attempt -le $max_attempts ]; do
+        log "Attempt $attempt/$max_attempts: Testing SSH connectivity to $mycelium_ip..."
+
+        if ssh -i "$HOME/.ssh/id_ed25519" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$mycelium_ip" "echo 'SSH ready'" 2>/dev/null; then
+            success "VM is ready and SSH is accessible"
+            return 0
+        fi
+
+        log "SSH not ready yet, waiting 30 seconds..."
+        sleep 30
+        ((attempt++))
+    done
+
+    die "VM did not become ready within $(($max_attempts * 30)) seconds"
+}
+
+# =====================================================================================
+# Chat Deployment Functions
+# =====================================================================================
+
+deploy_chat() {
+    local mycelium_ip="$1"
+
+    log "🚀 Deploying Mycelium-Matrix Chat to $mycelium_ip..."
+
+    # Use the existing remote deployment script
+    DEPLOY_CMD="curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-remote.sh | bash -s $mycelium_ip"
+
+    log "Running deployment command..."
+    if eval "$DEPLOY_CMD"; then
+        success "Chat deployment completed successfully"
+    else
+        die "Chat deployment failed"
+    fi
+}
+
+# =====================================================================================
+# Main Execution
+# =====================================================================================
+
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Automated deployment of Mycelium-Matrix Chat to TFGrid"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help              Show this help message"
+    echo "  -n, --name NAME         VM name (default: myceliumchat)"
+    echo "  -s, --ssh-key PATH      SSH public key path (default: ~/.ssh/id_ed25519.pub)"
+    echo "  -c, --cpu CORES         CPU cores (default: 4)"
+    echo "  -m, --memory GB         Memory in GB (default: 16)"
+    echo "  -d, --disk GB           Disk size in GB (default: 250)"
+    echo "  --node NODE_ID          Node ID (default: 6883)"
+    echo "  --no-mycelium           Disable mycelium networking"
+    echo ""
+    echo "Examples:"
+    echo "  $0                                    # Use default settings"
+    echo "  $0 --cpu 2 --memory 8 --disk 100     # Custom VM specs"
+    echo "  $0 --name mychat --node 1234         # Custom name and node"
+    echo ""
+    echo "Requirements:"
+    echo "  - tfcmd installed and configured"
+    echo "  - SSH key pair exists"
+    echo "  - Mycelium network connected (recommended)"
+    exit 1
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                usage
+                ;;
+            -n|--name)
+                VM_NAME="$2"
+                shift 2
+                ;;
+            -s|--ssh-key)
+                SSH_KEY_PATH="$2"
+                shift 2
+                ;;
+            -c|--cpu)
+                CPU_CORES="$2"
+                shift 2
+                ;;
+            -m|--memory)
+                MEMORY_GB="$2"
+                shift 2
+                ;;
+            -d|--disk)
+                DISK_GB="$2"
+                shift 2
+                ;;
+            --node)
+                NODE_ID="$2"
+                shift 2
+                ;;
+            --no-mycelium)
+                ENABLE_MYCELIUM=false
+                shift
+                ;;
+            *)
+                error "Unknown option: $1"
+                usage
+                ;;
+        esac
+    done
+}
+
+main() {
+    echo "🚀 Automated Mycelium-Matrix Chat TFGrid Deployment"
+    echo "==================================================" >&2
+
+    # Parse command line arguments
+    parse_args "$@"
+
+    # Validate prerequisites
+    if ! command -v tfcmd &> /dev/null; then
+        die "tfcmd is not installed or not in PATH. Please install tfcmd first."
+    fi
+
+    if [ ! -f "$SSH_KEY_PATH" ]; then
+        die "SSH public key not found at $SSH_KEY_PATH. Please generate SSH keys first."
+    fi
+
+    log "Configuration:"
+    echo "  VM Name: $VM_NAME" >&2
+    echo "  SSH Key: $SSH_KEY_PATH" >&2
+    echo "  CPU: $CPU_CORES cores" >&2
+    echo "  Memory: $MEMORY_GB GB" >&2
+    echo "  Disk: $DISK_GB GB" >&2
+    echo "  Node: $NODE_ID" >&2
+    echo "  Mycelium: $ENABLE_MYCELIUM" >&2
+    echo "" >&2
+
+    # Step 1: Deploy VM
+    log "Step 1: Deploying VM..."
+    TFCMD_OUTPUT=$(deploy_vm)
+
+    # Step 2: Extract mycelium IP
+    log "Step 2: Extracting mycelium IP..."
+    MYCELIUM_IP=$(extract_mycelium_ip "$TFCMD_OUTPUT")
+
+    # Step 3: Wait for VM to be ready
+    log "Step 3: Waiting for VM to be ready..."
+    wait_for_vm_ready "$MYCELIUM_IP"
+
+    # Step 4: Deploy chat application
+    log "Step 4: Deploying Mycelium-Matrix Chat..."
+    deploy_chat "$MYCELIUM_IP"
+
+    # Success
+    echo "" >&2
+    echo "==================================================" >&2
+    success "🎉 AUTOMATED DEPLOYMENT COMPLETE!"
+    echo "" >&2
+    echo "🌐 Your Mycelium-Matrix Chat is now running at:" >&2
+    echo "   📱 Web Interface: http://[$MYCELIUM_IP]" >&2
+    echo "   🔧 API Health: http://[$MYCELIUM_IP]:8080/api/health" >&2
+    echo "   📊 Matrix Bridge: http://[$MYCELIUM_IP]:8081/health" >&2
+    echo "" >&2
+    echo "🔐 SSH Access: ssh root@$MYCELIUM_IP" >&2
+    echo "   (or ssh muser@$MYCELIUM_IP after deployment)" >&2
+    echo "" >&2
+    echo "💡 To destroy the VM later: tfcmd cancel $VM_NAME" >&2
+    echo "==================================================" >&2
+}
+
+# Run main function
+main "$@"
