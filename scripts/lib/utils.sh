@@ -46,12 +46,28 @@ log() {
     timestamp=$(date +'%Y-%m-%d %H:%M:%S')
 
     # Check if we should log this level
-    # Default to 'info' if level is not recognized
-    if [ -z "${LOG_LEVELS[$level]}" ]; then
-        level="info"
-    fi
+    # Use a safer approach to check log levels
+    local current_level_value
+    local requested_level_value
 
-    if [ "${LOG_LEVELS[$level]}" -gt "${LOG_LEVELS[$LOG_LEVEL]}" ]; then
+    case "$level" in
+        error) requested_level_value=0 ;;
+        warn) requested_level_value=1 ;;
+        info) requested_level_value=2 ;;
+        debug) requested_level_value=3 ;;
+        success) requested_level_value=2 ;;  # Treat success as info level
+        *) requested_level_value=2 ;;  # Default to info
+    esac
+
+    case "$LOG_LEVEL" in
+        error) current_level_value=0 ;;
+        warn) current_level_value=1 ;;
+        info) current_level_value=2 ;;
+        debug) current_level_value=3 ;;
+        *) current_level_value=2 ;;  # Default to info
+    esac
+
+    if [ "$requested_level_value" -gt "$current_level_value" ]; then
         return
     fi
 

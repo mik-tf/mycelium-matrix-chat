@@ -111,10 +111,17 @@ get_config() {
     local key="$1"
     local default_value="$2"
 
-    if [ -n "${CONFIG[$key]}" ]; then
-        echo "${CONFIG[$key]}"
+    # Check if the key exists in the array
+    if [ -n "${CONFIG[$key]+x}" ]; then
+        local value="${CONFIG[$key]}"
+        echo "$value"
     else
-        echo "$default_value"
+        # Try to provide a helpful error message
+        if [ -n "$default_value" ]; then
+            echo "$default_value"
+        else
+            echo ""
+        fi
     fi
 }
 
@@ -135,20 +142,26 @@ validate_config() {
 
     local errors=0
 
-    # Required configurations
-    local required_configs=(
-        "vm.name"
-        "deployment.repo_url"
-        "software.mycelium_version"
-        "security.deploy_user"
-    )
+    # Required configurations with validation
+    if [ -z "$(get_config "vm.name" "")" ]; then
+        error "Missing required configuration: vm.name"
+        ((errors++))
+    fi
 
-    for config in "${required_configs[@]}"; do
-        if [ -z "$(get_config "$config")" ]; then
-            error "Missing required configuration: $config"
-            ((errors++))
-        fi
-    done
+    if [ -z "$(get_config "deployment.repo_url" "")" ]; then
+        error "Missing required configuration: deployment.repo_url"
+        ((errors++))
+    fi
+
+    if [ -z "$(get_config "software.mycelium_version" "")" ]; then
+        error "Missing required configuration: software.mycelium_version"
+        ((errors++))
+    fi
+
+    if [ -z "$(get_config "security.deploy_user" "")" ]; then
+        error "Missing required configuration: security.deploy_user"
+        ((errors++))
+    fi
 
     # Validate VM configuration
     if [ "$(get_config "vm.cpu")" -lt 1 ] 2>/dev/null; then
@@ -189,11 +202,29 @@ show_config() {
 
     echo "📋 Current Configuration:"
     echo "========================"
+    echo "Total config entries: ${#CONFIG[@]}"
 
     for key in "${!CONFIG[@]}"; do
         if [ -z "$filter" ] || [[ $key =~ $filter ]]; then
-            printf "  %-30s = %s\n" "$key" "${CONFIG[$key]}"
+            printf "  %-30s = '%s'\n" "$key" "${CONFIG[$key]}"
         fi
+    done
+    echo ""
+}
+
+debug_config() {
+    echo "🔍 CONFIG Array Debug:"
+    echo "======================"
+    echo "Array size: ${#CONFIG[@]}"
+
+    if [ ${#CONFIG[@]} -eq 0 ]; then
+        echo "CONFIG array is empty!"
+        return 1
+    fi
+
+    echo "All keys:"
+    for key in "${!CONFIG[@]}"; do
+        echo "  '$key' = '${CONFIG[$key]}'"
     done
     echo ""
 }
@@ -202,12 +233,12 @@ show_config_summary() {
     echo "📋 Configuration Summary:"
     echo "========================="
     echo "Environment: $(get_config "deployment.environment" "unknown")"
-    echo "VM Name: $(get_config "vm.name")"
-    echo "VM Specs: $(get_config "vm.cpu") CPU, $(get_config "vm.memory") GB RAM, $(get_config "vm.disk") GB disk"
-    echo "Repository: $(get_config "deployment.repo_url")"
-    echo "Branch: $(get_config "deployment.branch")"
-    echo "Deploy User: $(get_config "security.deploy_user")"
-    echo "SSH Key: $(get_config "deployment.ssh_key_path")"
+    echo "VM Name: $(get_config "vm.name" "unknown")"
+    echo "VM Specs: $(get_config "vm.cpu" "unknown") CPU, $(get_config "vm.memory" "unknown") GB RAM, $(get_config "vm.disk" "unknown") GB disk"
+    echo "Repository: $(get_config "deployment.repo_url" "unknown")"
+    echo "Branch: $(get_config "deployment.branch" "unknown")"
+    echo "Deploy User: $(get_config "security.deploy_user" "unknown")"
+    echo "SSH Key: $(get_config "deployment.ssh_key_path" "unknown")"
     echo ""
 }
 

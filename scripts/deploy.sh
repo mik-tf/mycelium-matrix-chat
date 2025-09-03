@@ -473,6 +473,40 @@ main_deployment() {
     # Validate prerequisites
     validate_prerequisites
 
+    # Check for dry-run mode
+    if [ "${DRY_RUN:-false}" = "true" ]; then
+        warning "DRY RUN MODE - No actual deployment will be performed"
+        log "Showing what would be executed..."
+
+        case "$environment" in
+            tfgrid)
+                log "Would deploy TFGrid VM with configuration:"
+                log "  Name: $(get_config 'vm.name' 'unknown')"
+                log "  CPU: $(get_config 'vm.cpu' 'unknown')"
+                log "  Memory: $(get_config 'vm.memory' 'unknown') GB"
+                log "  Disk: $(get_config 'vm.disk' 'unknown') GB"
+                log "  Node: $(get_config 'vm.node' 'unknown')"
+                log "  Mycelium: $(get_config 'vm.enable_mycelium' 'unknown')"
+                log "Would prepare remote environment and deploy application"
+                log "Would validate deployment and show results"
+                ;;
+
+            local)
+                log "Would run local deployment:"
+                log "  Command: cd $PROJECT_ROOT && make ops-production"
+                log "Would validate local deployment"
+                ;;
+
+            *)
+                error "Unsupported environment: $environment"
+                return 1
+                ;;
+        esac
+
+        success "Dry run completed - no changes made"
+        return 0
+    fi
+
     case "$environment" in
         tfgrid)
             # TFGrid deployment flow with rollback support
