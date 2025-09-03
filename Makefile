@@ -2,7 +2,7 @@
 # Mycelium-Matrix Integration Project - Makefile
 #
 
-.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-force-local ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod deploy-automated down clean logs logs-phase2 status
+.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-force-local ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod deploy-automated deploy-vm cancel-vm down clean logs logs-phase2 status
 
 # Default target
 help:
@@ -139,6 +139,14 @@ test-database:
 	@echo "ℹ️  Manual testing: Create rooms and verify database entries:"
 	@echo "  docker exec -it mycelium-matrix-postgres psql -U mycelium_user -d mycelium_matrix -c 'SELECT * FROM rooms;'"
 	@echo ""
+
+# TFCMD
+
+deploy-vm:
+	bash ./scripts/tfcmd-deploy.sh
+
+cancel-vm:
+	bash ./scripts/tfcmd-cancel.sh
 
 # ===== ENVIRONMENT SETUP =====
 
