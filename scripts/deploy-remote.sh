@@ -133,13 +133,37 @@ run_remote_deployment() {
     log "🚀 Starting remote deployment to $ip..."
     echo "" >&2
 
-    # Run the preparation script on the remote VM
-    log "Running preparation script on remote VM..."
-    if ! timeout 1800 ssh -i "$key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "bash -c 'curl -fsSL $PREPARATION_SCRIPT_URL | bash'" 2>&1; then
-        die "Remote preparation failed. Check the output above for details."
+    # Copy and run the local preparation script on the remote VM
+    log "Copying and running local preparation script on remote VM..."
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local prep_script="$script_dir/prepare-tfgrid-vm.sh"
+
+    if [ ! -f "$prep_script" ]; then
+        die "Local preparation script not found: $prep_script"
     fi
 
-    success "Remote deployment completed successfully!"
+    # Copy script to remote VM and execute it
+    local prep_output
+    prep_output=$(timeout 1800 bash -c "
+        scp -i '$key' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null '$prep_script' '$user@$ip:/tmp/prepare-tfgrid-vm.sh' &&
+        ssh -i '$key' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null '$user@$ip' 'bash /tmp/prepare-tfgrid-vm.sh'
+    " 2>&1)
+
+    # Check if preparation succeeded
+    if [ $? -ne 0 ]; then
+        error "Remote preparation failed. Output:"
+        echo "$prep_output" >&2
+        die "Cannot continue deployment without successful preparation."
+    fi
+
+    # Check if muser was created (critical for deployment)
+    if ! echo "$prep_output" | grep -q "Deployment user muser created"; then
+        warning "⚠️  muser may not have been created properly"
+        log "Preparation output: $prep_output"
+    fi
+
+    success "Remote preparation completed successfully!"
 }
 
 show_completion_info() {

@@ -348,13 +348,40 @@ main() {
     echo "🔄 Switching to $DEPLOY_USER and starting deployment..."
     echo ""
 
-    # Run deployment as muser (ignore hostname errors)
-    log "Starting deployment as $DEPLOY_USER..."
-    if su - "$DEPLOY_USER" -c "curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh | bash" 2>&1; then
-        success "Deployment completed successfully"
+    # Copy and run local deployment script as muser
+    log "Copying and running local deployment script as $DEPLOY_USER..."
+
+    # Find the deployment script
+    local deploy_script="/tmp/deploy-mycelium-chat.sh"
+    local local_script
+    local_script="$(find /tmp -name "deploy-mycelium-chat.sh" 2>/dev/null || echo "")"
+
+    # If not in /tmp, look in the same directory as this script
+    if [ -z "$local_script" ]; then
+        local script_dir
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        local_script="$script_dir/deploy-mycelium-chat.sh"
+    fi
+
+    if [ -f "$local_script" ]; then
+        cp "$local_script" "$deploy_script"
+        chown "$DEPLOY_USER:$DEPLOY_USER" "$deploy_script"
+        chmod +x "$deploy_script"
+
+        if su - "$DEPLOY_USER" -c "bash $deploy_script" 2>&1; then
+            success "Deployment completed successfully"
+        else
+            warning "Deployment had issues but may have completed partially"
+            log "Check the deployment status manually"
+        fi
     else
-        warning "Deployment had issues but may have completed partially"
-        log "Check the deployment status manually"
+        warning "Local deployment script not found, falling back to download"
+        if su - "$DEPLOY_USER" -c "curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh | bash" 2>&1; then
+            success "Deployment completed successfully"
+        else
+            warning "Deployment had issues but may have completed partially"
+            log "Check the deployment status manually"
+        fi
     fi
 
     echo ""
