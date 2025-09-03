@@ -438,9 +438,15 @@ ls -la
 ### Execute the Automated Deployment
 
 ```bash
-# Run the production deployment script
+# Run the production deployment script (automatic environment detection)
 make ops-production
 ```
+
+**🚀 New: Automatic Environment Detection**
+- ✅ No more manual confirmation prompts that block automation
+- ✅ Automatically detects if running on TFGrid VM vs local machine
+- ✅ Uses multiple detection methods: Mycelium network, user account, OS version
+- ✅ For local testing: `make ops-production-force-local`
 
 ### What Happens During Deployment
 
@@ -654,6 +660,47 @@ sudo systemctl restart mycelium-frontend
 - **DNS Setup**: `./docs/ops/dns-setup.md`
 - **Logs**: `make ops-logs`
 - **Status**: `make ops-status`
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Issue: "Deployment cancelled. Please run on the ThreeFold Grid VM."
+
+**Problem**: The old deployment system required manual confirmation that blocked automation.
+
+**Solution**: ✅ **FIXED!** The deployment now uses automatic environment detection:
+- Detects Mycelium network interfaces
+- Recognizes TFGrid deployment user (`muser`)
+- Validates Ubuntu version and system configuration
+- No more manual prompts blocking automation
+
+#### Issue: "Local environment detected" or "Ubuntu 24.04 detected but not confirmed as TFGrid VM"
+
+**Problem**: Running deployment on local machine instead of TFGrid VM.
+
+**Solutions**:
+1. **For TFGrid deployment**: Ensure you're running on the TFGrid VM with Mycelium configured
+2. **For local testing**: Use `make ops-production-force-local` to bypass detection
+3. **For dry run**: Use `make ops-production-dry` to test without making changes
+
+#### Issue: "Could not determine Mycelium status" or "Mycelium not found"
+
+**Problem**: Mycelium P2P network not properly configured.
+
+**Solutions**:
+1. Ensure Mycelium is installed: `curl -fsSL https://mycelium.fly.dev/install | sh`
+2. Configure peers on local machine: `sudo mycelium --peers tcp://188.40.132.242:9651 ...`
+3. Start Mycelium service: `sudo systemctl enable myceliumd && sudo systemctl start myceliumd`
+
+#### Issue: Permission denied or sudo access problems
+
+**Problem**: Running as wrong user or missing sudo privileges.
+
+**Solutions**:
+1. On TFGrid VM, use the `muser` account created during setup
+2. Ensure user has sudo access: `sudo -l`
+3. For root access issues, the deployment script will refuse to run as root for security
 
 ## Next Steps
 

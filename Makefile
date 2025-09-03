@@ -2,7 +2,7 @@
 # Mycelium-Matrix Integration Project - Makefile
 #
 
-.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod down clean logs logs-phase2 status
+.PHONY: help test-phase1 test-backend test-frontend test-integration test-database setup-full setup-phase1 setup-phase2-local setup-phase2-prod test-phase2 test-bridge test-mycelium test-federation test-matrix-org test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end test-bridge-health test-frontend-load test-mycelium-detect ops-production ops-production-force-local ops-production-dry ops-production-rollback ops-status ops-logs ops-backup deploy-prod down clean logs logs-phase2 status
 
 # Default target
 help:
@@ -54,6 +54,7 @@ help:
 	@echo ""
 	@echo "🚀 Production Operations:"
 	@echo "  ops-production         # Deploy to production (ThreeFold Grid)"
+	@echo "  ops-production-force-local # Force deployment on local machine (bypass detection)"
 	@echo "  ops-production-dry     # Dry run production deployment"
 	@echo "  ops-production-rollback # Rollback production deployment"
 	@echo "  ops-status            # Production status overview"
@@ -557,12 +558,21 @@ ops-production:
 	@echo "  ✅ Domain chat.projectmycelium.org registered"
 	@echo "  ✅ DNS A record configured to VM IP"
 	@echo ""
-	@echo "⚠️  IMPORTANT: Run this command ON the ThreeFold Grid VM"
-	@echo "   Not on your local machine!"
-	@echo ""
-	@read -p "Are you running this on the ThreeFold Grid VM? (y/N): " confirm; \
-	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
-		echo "❌ Deployment cancelled. Please run on the ThreeFold Grid VM."; \
+	@echo "🔍 Detecting execution environment..."
+	@if [ -f /proc/net/route ] && grep -q "mycelium" /proc/net/route 2>/dev/null; then \
+		echo "✅ Detected Mycelium network interface - running on TFGrid VM"; \
+	elif [ "$$(whoami)" = "muser" ] && [ -d "/home/muser" ]; then \
+		echo "✅ Detected TFGrid deployment user (muser) - proceeding with deployment"; \
+	elif [ -f "/etc/os-release" ] && grep -q "Ubuntu" /etc/os-release && grep -q "24.04" /etc/os-release; then \
+		echo "⚠️  Ubuntu 24.04 detected but not confirmed as TFGrid VM"; \
+		echo "   This appears to be a local Ubuntu system."; \
+		echo "   For security, deployment should run on TFGrid VM."; \
+		echo "   Override with: make ops-production-force-local"; \
+		exit 1; \
+	else \
+		echo "⚠️  Local environment detected"; \
+		echo "   This command should be run on the ThreeFold Grid VM."; \
+		echo "   Use 'make ops-production-dry' for local testing."; \
 		exit 1; \
 	fi
 	@echo ""
@@ -575,6 +585,15 @@ ops-production-dry:
 	@echo "This will show what would be installed without making changes"
 	@echo ""
 	./scripts/deployment-prod.sh --dry-run
+
+# Force local deployment (bypasses environment detection)
+ops-production-force-local:
+	@echo "🚀 Force Local Production Deployment"
+	@echo "⚠️  WARNING: This bypasses environment detection and may run on local machine"
+	@echo "   Use only for testing or when you know what you're doing"
+	@echo ""
+	@echo "🔄 Executing production deployment script..."
+	./scripts/deployment-prod.sh
 
 # Rollback production deployment
 ops-production-rollback:
