@@ -23,9 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/sc
 - ✅ Your application is running when it completes!
 
 **Requirements:**
-- SSH key configured for passwordless access to the VM
 - Mycelium network connected on your local machine
 - Ubuntu 20.04+ on the TFGrid VM
+- SSH key (TFGrid provides this automatically)
 
 **Time Estimate:** 25-35 minutes total
 

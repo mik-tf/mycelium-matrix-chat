@@ -77,18 +77,18 @@ check_ssh_connectivity() {
 
     log "Testing SSH connectivity to $user@$ip..."
 
-    # Test SSH connection with timeout
+    # Test SSH connection with timeout (TFGrid provides SSH keys automatically)
     if ! timeout 30 ssh -i "$key" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "echo 'SSH connection successful'" 2>/dev/null; then
         die "Cannot connect to $user@$ip via SSH.
 
-Troubleshooting:
-1. Ensure SSH key is properly configured: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
-2. Copy public key to VM: ssh-copy-id -i ~/.ssh/id_ed25519.pub root@$ip
-3. Verify Mycelium network is connected on your local machine
-4. Check that the VM is running and accessible
+Troubleshooting for TFGrid VMs:
+1. Verify Mycelium network is connected on your local machine
+2. Ensure you're using the correct Mycelium IP from TFGrid dashboard
+3. Check that the VM is running and accessible
+4. TFGrid provides SSH keys automatically - no manual setup needed
 
-Command to copy SSH key:
-  ssh-copy-id -i ~/.ssh/id_ed25519.pub root@$ip"
+If connection fails, try:
+  ssh root@$ip  # Test basic connectivity"
     fi
 
     success "SSH connectivity confirmed"
@@ -186,9 +186,9 @@ usage() {
     echo "  curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-remote.sh | bash -s 400::abcd:1234:5678:9abc"
     echo ""
     echo "Requirements:"
-    echo "  - SSH key configured for passwordless access to the VM"
     echo "  - Mycelium network connected on your local machine"
     echo "  - TFGrid VM running Ubuntu 20.04 or higher"
+    echo "  - SSH key (provided automatically by TFGrid)"
     echo ""
     echo "Example:"
     echo "  $0 400::abcd:1234:5678:9abc"
@@ -211,15 +211,14 @@ main() {
     # Validate inputs
     validate_mycelium_ip "$MYCELIUM_IP"
 
-    # Check SSH key exists
+    # Check SSH key exists (TFGrid provides SSH keys automatically)
     if [ ! -f "$SSH_KEY" ]; then
         die "SSH key not found at $SSH_KEY.
 
-To create SSH key:
+For TFGrid VMs, SSH keys are provided automatically. If missing:
   ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
 
-To copy to VM:
-  ssh-copy-id -i ~/.ssh/id_ed25519.pub root@$MYCELIUM_IP"
+TFGrid handles SSH key distribution automatically - no manual copying needed."
     fi
 
     # Test connectivity and requirements
