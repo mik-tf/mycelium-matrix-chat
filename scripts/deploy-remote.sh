@@ -59,23 +59,16 @@ die() {
 validate_mycelium_ip() {
     local ip="$1"
 
-    # Basic IPv6 validation for Mycelium addresses (case insensitive)
-    if [[ ! "$ip" =~ ^[0-9a-fA-F:]+$ ]]; then
-        die "Invalid Mycelium IP format. Expected IPv6 format like: 400::abcd:1234:5678:9abc"
+    # Minimal validation - just ensure it's not empty and contains colons
+    if [ -z "$ip" ]; then
+        die "No IP address provided"
     fi
 
-    # Count colons - should be 7 for full IPv6
-    local colon_count=$(echo "$ip" | tr -cd ':' | wc -c)
-    if [ "$colon_count" -ne 7 ]; then
-        die "Invalid IPv6 format: should have 7 colons, found $colon_count"
+    if ! echo "$ip" | grep -q ':'; then
+        die "IP address must contain colons"
     fi
 
-    # Basic check that it contains hex-like characters
-    if ! echo "$ip" | grep -q '[0-9a-fA-F]'; then
-        die "IP doesn't contain valid hex digits"
-    fi
-
-    log "IP validation passed: $ip"
+    log "Using IP: $ip"
 }
 
 check_ssh_connectivity() {
