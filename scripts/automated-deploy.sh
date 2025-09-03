@@ -108,25 +108,26 @@ extract_mycelium_ip() {
         die "Could not extract mycelium IP from tfcmd output. Please check the output above."
     fi
 
-    # Validate the IP format
-    # Remove any whitespace first
-    MYCELIUM_IP=$(echo "$MYCELIUM_IP" | tr -d '[:space:]')
+    # Basic validation - just ensure we have something that looks like an IP
+    MYCELIUM_IP=$(echo "$MYCELIUM_IP" | tr -d '[:space:]' | tr -d '\n' | tr -d '\r')
 
-    # IPv6 validation: should contain only hex digits and colons
-    if [[ ! "$MYCELIUM_IP" =~ ^[0-9a-fA-F:]+$ ]]; then
-        die "Extracted IP '$MYCELIUM_IP' doesn't look like a valid IPv6 address"
+    # Simple validation: should not be empty and should contain colons
+    if [ -z "$MYCELIUM_IP" ]; then
+        die "No IP address extracted from tfcmd output"
     fi
 
-    # Count colons - IPv6 should have exactly 7 colons
+    # Check if it contains at least some colons (basic IPv6-like check)
+    if ! echo "$MYCELIUM_IP" | grep -q ':'; then
+        die "Extracted value '$MYCELIUM_IP' doesn't contain colons - not an IPv6 address"
+    fi
+
+    # Count colons - should be reasonable for IPv6 (3-8 is acceptable)
     local colon_count=$(echo "$MYCELIUM_IP" | tr -cd ':' | wc -c)
-    if [ "$colon_count" -ne 7 ]; then
-        die "Invalid IPv6 format: '$MYCELIUM_IP' should have 7 colons, found $colon_count"
+    if [ "$colon_count" -lt 3 ] || [ "$colon_count" -gt 8 ]; then
+        warning "IP '$MYCELIUM_IP' has $colon_count colons (expected 7 for standard IPv6)"
     fi
 
-    # Additional validation: should start with a digit (typical for mycelium IPs)
-    if [[ ! "$MYCELIUM_IP" =~ ^[0-9a-fA-F] ]]; then
-        warning "IP '$MYCELIUM_IP' doesn't start with a hex digit - this might not be valid"
-    fi
+    log "Using mycelium IP: $MYCELIUM_IP"
 
     success "Mycelium IP extracted: $MYCELIUM_IP"
     echo "$MYCELIUM_IP"
