@@ -71,3 +71,7 @@ secrets/
 *.exe
 *.dll
 *.dylib
+
+# Key Bin
+
+priv_key.bin
