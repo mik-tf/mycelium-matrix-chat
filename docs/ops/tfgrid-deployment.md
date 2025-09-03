@@ -4,19 +4,25 @@
 
 This guide provides step-by-step instructions for deploying the Mycelium-Matrix Chat application on the ThreeFold Grid. The deployment process is automated and takes approximately 15-20 minutes.
 
-**🚀 One-Command TFGrid Deployment:**
+**🚀 Zero-Touch Local Deployment:**
 
 ```bash
 # 1. Deploy Ubuntu 24.04 VM with Mycelium on TFGrid Dashboard
-# 2. Run this single command (as root):
-curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh | bash
+# 2. Get the Mycelium IP from TFGrid (e.g., 400::abcd:1234:5678:9abc)
+# 3. Run this single command on your LOCAL MACHINE:
+./deploy-to-tfgrid.sh 400::abcd:1234:5678:9abc
 ```
 
 **That's it!** 🎉 The script will:
-- ✅ Set up `muser` with passwordless sudo
-- ✅ Install all prerequisites (Docker, Rust, Node.js, etc.)
-- ✅ Automatically switch to `muser` and deploy the application
-- ✅ Your Mycelium-Matrix Chat will be running!
+- ✅ Validate SSH connectivity to your TFGrid VM
+- ✅ Automatically run the full deployment remotely
+- ✅ Monitor progress and report completion
+- ✅ Your Mycelium-Matrix Chat is running when it completes!
+
+**Requirements:**
+- SSH key configured for passwordless access to the VM
+- Mycelium network connected on your local machine
+- The deployment script: `deploy-to-tfgrid.sh`
 
 **Time Estimate:** 25-35 minutes total
 
