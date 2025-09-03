@@ -6,7 +6,7 @@
 # This script automates the complete deployment process:
 # 1. Deploy VM using tfcmd
 # 2. Extract mycelium IP from tfcmd output
-# 3. Deploy Mycelium-Matrix Chat using the remote deployment script
+# 3. Deploy Mycelium-Matrix Chat using the deployment script
 # =====================================================================================
 
 set -e  # Exit on any error
