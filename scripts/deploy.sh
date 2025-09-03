@@ -271,18 +271,27 @@ wait_for_vm_ready() {
 
     local elapsed=0
     while [ $elapsed -lt "$timeout" ]; do
-        local ssh_key_path
-        ssh_key_path=$(get_config "deployment.ssh_key_path")
-        ssh_key_path=$(eval echo "$ssh_key_path")
+        # First try ping6 to check if VM is reachable
+        if ping6 -c 1 -W 2 "$ip" >/dev/null 2>&1; then
+            log "VM is reachable via ping6"
 
-        if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-               -i "$ssh_key_path" \
-               "root@$ip" "echo 'VM is ready'" 2>/dev/null; then
-            success "VM is ready for deployment"
-            return 0
+            # Then try SSH as root (original method)
+            local ssh_key_path
+            ssh_key_path=$(get_config "deployment.ssh_key_path")
+            ssh_key_path=$(eval echo "$ssh_key_path")
+
+            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                    -i "$ssh_key_path" \
+                    "root@$ip" "echo 'VM is ready'" 2>/dev/null; then
+                success "VM is ready for deployment (SSH successful)"
+                return 0
+            else
+                log "VM reachable but SSH not ready yet, waiting ${check_interval}s..."
+            fi
+        else
+            log "VM not reachable yet, waiting ${check_interval}s..."
         fi
 
-        log "VM not ready yet, waiting ${check_interval}s..."
         sleep "$check_interval"
         elapsed=$((elapsed + check_interval))
     done
