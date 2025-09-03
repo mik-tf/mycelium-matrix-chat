@@ -90,11 +90,14 @@ apply_env_overrides() {
             local section="${BASH_REMATCH[1]}"
             local config_key="${BASH_REMATCH[2]}"
             local env_var="MYCELIUM_MATRIX_${section^^}_${config_key^^}"
-            local env_value="${!env_var}"
 
-            if [ -n "$env_value" ]; then
-                log "Applying environment override: $key = $env_value"
-                CONFIG["$key"]="$env_value"
+            # Check if environment variable exists before trying to expand it
+            if [ -n "${!env_var+x}" ]; then
+                local env_value="${!env_var}"
+                if [ -n "$env_value" ]; then
+                    log "Applying environment override: $key = $env_value"
+                    CONFIG["$key"]="$env_value"
+                fi
             fi
         fi
     done

@@ -46,6 +46,11 @@ log() {
     timestamp=$(date +'%Y-%m-%d %H:%M:%S')
 
     # Check if we should log this level
+    # Default to 'info' if level is not recognized
+    if [ -z "${LOG_LEVELS[$level]}" ]; then
+        level="info"
+    fi
+
     if [ "${LOG_LEVELS[$level]}" -gt "${LOG_LEVELS[$LOG_LEVEL]}" ]; then
         return
     fi
