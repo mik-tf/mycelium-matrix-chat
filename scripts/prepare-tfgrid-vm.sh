@@ -213,10 +213,12 @@ install_web_server() {
 install_mycelium() {
     log "Installing Mycelium P2P client..."
 
-    # Download Mycelium binary
-    wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
-    chmod +x mycelium-linux-x64
-    mv mycelium-linux-x64 /usr/local/bin/mycelium
+    # Download Mycelium binary (use the correct release URL)
+    wget https://github.com/threefoldtech/mycelium/releases/download/v0.6.1/mycelium-x86_64-unknown-linux-musl.tar.gz
+    tar -xzf mycelium-x86_64-unknown-linux-musl.tar.gz
+    chmod +x mycelium
+    mv mycelium /usr/local/bin/mycelium
+    rm mycelium-x86_64-unknown-linux-musl.tar.gz
 
     success "Mycelium client installed"
 }

@@ -88,9 +88,11 @@ sudo systemctl enable nginx
 #### Mycelium Client (for P2P networking)
 ```bash
 # Download and install Mycelium
-wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
-chmod +x mycelium-linux-x64
-sudo mv mycelium-linux-x64 /usr/local/bin/mycelium
+wget https://github.com/threefoldtech/mycelium/releases/download/v0.6.1/mycelium-x86_64-unknown-linux-musl.tar.gz
+tar -xzf mycelium-x86_64-unknown-linux-musl.tar.gz
+chmod +x mycelium
+sudo mv mycelium /usr/local/bin/mycelium
+rm mycelium-x86_64-unknown-linux-musl.tar.gz
 # Verify installation
 mycelium --version
 ```
@@ -156,13 +158,15 @@ $SUDO apt install -y nginx certbot python3-certbot-nginx
 $SUDO systemctl enable nginx
 
 # Install Mycelium
-wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
-chmod +x mycelium-linux-x64
+wget https://github.com/threefoldtech/mycelium/releases/download/v0.6.1/mycelium-x86_64-unknown-linux-musl.tar.gz
+tar -xzf mycelium-x86_64-unknown-linux-musl.tar.gz
+chmod +x mycelium
 if [ "$EUID" -eq 0 ]; then
-    mv mycelium-linux-x64 /usr/local/bin/mycelium
+    mv mycelium /usr/local/bin/mycelium
 else
-    $SUDO mv mycelium-linux-x64 /usr/local/bin/mycelium
+    $SUDO mv mycelium /usr/local/bin/mycelium
 fi
+rm mycelium-x86_64-unknown-linux-musl.tar.gz
 
 echo "✅ All prerequisites installed!"
 if [ "$EUID" -ne 0 ]; then
@@ -590,9 +594,11 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
 sudo apt-get install -y nodejs
 
 # Install Mycelium
-wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
-chmod +x mycelium-linux-x64
-sudo mv mycelium-linux-x64 /usr/local/bin/mycelium
+wget https://github.com/threefoldtech/mycelium/releases/download/v0.6.1/mycelium-x86_64-unknown-linux-musl.tar.gz
+tar -xzf mycelium-x86_64-unknown-linux-musl.tar.gz
+chmod +x mycelium
+sudo mv mycelium /usr/local/bin/mycelium
+rm mycelium-x86_64-unknown-linux-musl.tar.gz
 
 # Then retry deployment
 make ops-production
