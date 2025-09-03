@@ -109,19 +109,15 @@ apply_env_overrides() {
 
 get_config() {
     local key="$1"
-    local default_value="$2"
+    local default_value="${2:-}"
 
     # Check if the key exists in the array
     if [ -n "${CONFIG[$key]+x}" ]; then
         local value="${CONFIG[$key]}"
         echo "$value"
     else
-        # Try to provide a helpful error message
-        if [ -n "$default_value" ]; then
-            echo "$default_value"
-        else
-            echo ""
-        fi
+        # Return default value if provided
+        echo "$default_value"
     fi
 }
 

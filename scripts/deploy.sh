@@ -271,9 +271,20 @@ wait_for_vm_ready() {
 
     local elapsed=0
     while [ $elapsed -lt "$timeout" ]; do
+        local ssh_key_path
+        ssh_key_path=$(get_config "deployment.ssh_key_path")
+        ssh_key_path=$(eval echo "$ssh_key_path")
+
+        # Handle IPv6 addresses by wrapping in brackets
+        if [[ $ip =~ : ]]; then
+            ssh_target="root@[$ip]"
+        else
+            ssh_target="root@$ip"
+        fi
+
         if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-               -i "$(eval echo "$(get_config "deployment.ssh_key_path")")" \
-               "root@$ip" "echo 'VM is ready'" 2>/dev/null; then
+               -i "$ssh_key_path" \
+               "$ssh_target" "echo 'VM is ready'" 2>/dev/null; then
             success "VM is ready for deployment"
             return 0
         fi
@@ -302,13 +313,20 @@ execute_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
+    # Handle IPv6 addresses by wrapping in brackets
+    if [[ $ip =~ : ]]; then
+        ssh_target="$user@[$ip]"
+    else
+        ssh_target="$user@$ip"
+    fi
+
     if ! ssh -i "$ssh_key_path" \
-            -o ConnectTimeout=10 \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            -o LogLevel=ERROR \
-            "$user@$ip" \
-            "timeout $timeout bash -c '$command'" 2>&1; then
+             -o ConnectTimeout=10 \
+             -o StrictHostKeyChecking=no \
+             -o UserKnownHostsFile=/dev/null \
+             -o LogLevel=ERROR \
+             "$ssh_target" \
+             "timeout $timeout bash -c '$command'" 2>&1; then
 
         error "Remote command failed on $user@$ip"
         return 1
@@ -326,11 +344,18 @@ copy_to_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
+    # Handle IPv6 addresses by wrapping in brackets
+    if [[ $ip =~ : ]]; then
+        scp_target="$user@[$ip]:$remote_path"
+    else
+        scp_target="$user@$ip:$remote_path"
+    fi
+
     if ! scp -i "$ssh_key_path" \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$local_file" \
-            "$user@$ip:$remote_path" 2>&1; then
+             -o StrictHostKeyChecking=no \
+             -o UserKnownHostsFile=/dev/null \
+             "$local_file" \
+             "$scp_target" 2>&1; then
 
         error "File copy failed: $local_file -> $user@$ip:$remote_path"
         return 1
