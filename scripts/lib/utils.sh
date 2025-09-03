@@ -32,7 +32,16 @@ declare -A LOG_LEVELS=(
 
 log() {
     local level="${1:-info}"
-    local message="$2"
+    local message=""
+
+    # Handle case where only one argument is provided (assume it's the message)
+    if [ $# -eq 1 ]; then
+        message="$1"
+        level="info"
+    else
+        message="$2"
+    fi
+
     local timestamp
     timestamp=$(date +'%Y-%m-%d %H:%M:%S')
 
