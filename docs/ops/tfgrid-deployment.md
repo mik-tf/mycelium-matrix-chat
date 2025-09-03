@@ -4,6 +4,14 @@
 
 This guide provides step-by-step instructions for deploying the Mycelium-Matrix Chat application on the ThreeFold Grid. The deployment process is automated and takes approximately 15-20 minutes.
 
+**🚀 Quick Start for TFGrid Users:**
+1. Deploy Ubuntu 24.04 VM with Mycelium on TFGrid
+2. Run: `curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh | bash`
+3. Switch to muser: `su - muser`
+4. Clone repo: `git clone https://github.com/mik-tf/mycelium-matrix-chat`
+5. Deploy: `cd mycelium-matrix-chat && make ops-production`
+6. Access at: `https://your-domain.com`
+
 ## Prerequisites
 
 ### System Requirements
@@ -195,12 +203,21 @@ chmod +x prepare-tfgrid-vm.sh
 ./prepare-tfgrid-vm.sh
 ```
 
+**Alternative: Direct execution (if you have the repo)**
+```bash
+# If you already have the repository cloned:
+cd mycelium-matrix-chat/scripts
+./prepare-tfgrid-vm.sh
+```
+
 **What the script does:**
 - ✅ Creates `muser` with sudo privileges
 - ✅ Installs all prerequisites (Docker, Rust, Node.js, etc.)
 - ✅ Configures firewall and security
 - ✅ Verifies installation
 - ✅ Provides next steps
+
+**Time Estimate:** ~10-15 minutes
 
 After the script completes, switch to the deployment user:
 
@@ -634,7 +651,26 @@ sudo systemctl restart mycelium-frontend
 
 ---
 
-**Deployment Time**: ~15-20 minutes
+## Complete Workflow Summary
+
+| Step | Action | Time | User |
+|------|--------|------|------|
+| 1 | Deploy Ubuntu 24.04 VM on TFGrid | 2-3 min | TFGrid Dashboard |
+| 2 | Configure Mycelium peers locally | 1-2 min | Local machine |
+| 3 | Run preparation script | 10-15 min | Root on VM |
+| 4 | Switch to muser & change password | 1 min | muser on VM |
+| 5 | Clone repository | 1-2 min | muser on VM |
+| 6 | Run deployment | 15-20 min | muser on VM |
+| 7 | Configure DNS (optional) | 5-10 min | Domain registrar |
+| **Total Time** | | **35-55 minutes** | |
+
+**Security Notes:**
+- VM starts as root (TFGrid default)
+- Preparation script creates `muser` with sudo privileges
+- Deployment runs as `muser` (not root) for security
+- Services run as `muser` user
+- All prerequisites installed automatically
+
 **Maintenance**: Regular log checks and backups
 **Support**: Comprehensive documentation available
 
