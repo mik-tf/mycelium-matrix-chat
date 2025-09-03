@@ -16,7 +16,8 @@ curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/sc
 **That's it!** 🎉 The script will:
 - ✅ Download and run the deployment script automatically
 - ✅ Validate SSH connectivity to your TFGrid VM
-- ✅ Set up `muser` with passwordless sudo privileges
+- ✅ Set up `muser` with passwordless sudo and SSH privileges
+- ✅ Copy SSH keys for passwordless muser access
 - ✅ Install all prerequisites (Docker, Rust, Node.js, etc.)
 - ✅ Deploy the complete Mycelium-Matrix Chat application
 - ✅ Monitor progress and report completion
@@ -185,6 +186,17 @@ useradd -m -s /bin/bash muser
 usermod -aG sudo muser
 usermod -aG docker muser
 
+# Configure passwordless sudo
+echo "muser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/muser
+chmod 0440 /etc/sudoers.d/muser
+
+# Copy SSH keys for passwordless access
+mkdir -p /home/muser/.ssh
+cp /root/.ssh/authorized_keys /home/muser/.ssh/authorized_keys 2>/dev/null || true
+chown -R muser:muser /home/muser/.ssh
+chmod 700 /home/muser/.ssh
+chmod 600 /home/muser/.ssh/authorized_keys
+
 # Set password for the user
 passwd muser
 
@@ -232,7 +244,8 @@ cd mycelium-matrix-chat/scripts
 ```
 
 **What the script does automatically:**
-- ✅ Creates `muser` with passwordless sudo privileges
+- ✅ Creates `muser` with passwordless sudo and SSH privileges
+- ✅ Copies SSH keys for passwordless access to muser
 - ✅ Installs all prerequisites (Docker, Rust, Node.js, Mycelium, etc.)
 - ✅ Configures firewall and security
 - ✅ Verifies installation

@@ -107,7 +107,14 @@ create_deploy_user() {
     # Set no password for the user (passwordless login)
     passwd -d "$DEPLOY_USER"
 
-    success "Deployment user $DEPLOY_USER created with passwordless sudo privileges"
+    # Copy SSH keys from root to muser for passwordless SSH access
+    mkdir -p /home/$DEPLOY_USER/.ssh
+    cp /root/.ssh/authorized_keys /home/$DEPLOY_USER/.ssh/authorized_keys 2>/dev/null || true
+    chown -R $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh
+    chmod 700 /home/$DEPLOY_USER/.ssh
+    chmod 600 /home/$DEPLOY_USER/.ssh/authorized_keys
+
+    success "Deployment user $DEPLOY_USER created with passwordless sudo and SSH access"
 }
 
 # =====================================================================================
