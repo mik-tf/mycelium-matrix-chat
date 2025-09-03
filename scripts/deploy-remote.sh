@@ -16,9 +16,8 @@ set -e  # Exit on any error
 MYCELIUM_IP=""
 SSH_USER="root"
 SSH_KEY="$HOME/.ssh/id_ed25519"
+# Using local scripts instead of GitHub URLs
 REPO_URL="https://github.com/mik-tf/mycelium-matrix-chat"
-PREPARATION_SCRIPT_URL="https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh"
-DEPLOYMENT_SCRIPT_URL="https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/deploy-mycelium-chat.sh"
 
 # Colors for output
 RED='\033[0;31m'
