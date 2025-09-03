@@ -6,9 +6,223 @@ This guide provides step-by-step instructions for deploying the Mycelium-Matrix 
 
 ## Prerequisites
 
+### System Requirements
 - ThreeFold Grid account
+- Ubuntu 24.04 LTS VM (2 vCPUs, 4 GB RAM minimum)
 - Basic familiarity with Linux commands
 - Domain name (optional, but recommended for production)
+
+### Required Software Packages
+The deployment requires the following software to be installed on your Ubuntu 24.04 VM.
+
+**Important Security Note**: This application should NOT be run as root. The deployment script requires running as a regular user with sudo privileges. On TFGrid VMs, create a dedicated user for deployment.
+
+#### Core System Tools
+```bash
+# Update system and install basic tools
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git make curl wget build-essential pkg-config libssl-dev
+```
+
+#### Docker and Container Tools
+```bash
+# Install Docker and Docker Compose
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+# Note: You may need to log out and back in for docker group changes to take effect
+```
+
+#### Rust Toolchain (for backend services)
+```bash
+# Install Rust using rustup
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+# Add Rust to PATH permanently by adding to ~/.bashrc:
+# echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+```
+
+#### Node.js and npm (for frontend)
+```bash
+# Install Node.js 20.x LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+# Verify installation
+node --version
+npm --version
+```
+
+#### Web Server and SSL
+```bash
+# Install Nginx and Certbot
+sudo apt install -y nginx certbot python3-certbot-nginx
+sudo systemctl enable nginx
+```
+
+#### Mycelium Client (for P2P networking)
+```bash
+# Download and install Mycelium
+wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
+chmod +x mycelium-linux-x64
+sudo mv mycelium-linux-x64 /usr/local/bin/mycelium
+# Verify installation
+mycelium --version
+```
+
+### Quick Prerequisites Installation Script
+To install all prerequisites in one go, run this script on your Ubuntu 24.04 VM:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🚀 Installing Mycelium-Matrix Chat Prerequisites..."
+
+# Security check: Do not run as root
+if [ "$EUID" -eq 0 ]; then
+    echo "❌ Security Error: This script should NOT be run as root."
+    echo "📝 Please create a non-root user with sudo privileges and run as that user."
+    echo ""
+    echo "To create a deployment user automatically:"
+    echo "  useradd -m -s /bin/bash muser"
+    echo "  usermod -aG sudo muser"
+    echo "  passwd muser"
+    echo "  su - muser"
+    echo "  ./install-prerequisites.sh"
+    exit 1
+fi
+
+# Check sudo access
+if ! sudo -n true 2>/dev/null; then
+    echo "❌ Error: This script requires sudo privileges."
+    echo "📝 Please ensure your user has sudo access."
+    exit 1
+fi
+
+echo "📝 Running as $(whoami) with sudo privileges"
+SUDO="sudo"
+
+# Update system
+$SUDO apt update && $SUDO apt upgrade -y
+
+# Install core system tools
+$SUDO apt install -y git curl wget build-essential pkg-config libssl-dev
+
+# Install Docker
+$SUDO apt install -y docker.io docker-compose
+$SUDO systemctl enable docker
+$SUDO systemctl start docker
+if [ "$EUID" -ne 0 ]; then
+    $SUDO usermod -aG docker $USER
+fi
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | $SUDO bash -
+$SUDO apt-get install -y nodejs
+
+# Install Nginx and Certbot
+$SUDO apt install -y nginx certbot python3-certbot-nginx
+$SUDO systemctl enable nginx
+
+# Install Mycelium
+wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
+chmod +x mycelium-linux-x64
+if [ "$EUID" -eq 0 ]; then
+    mv mycelium-linux-x64 /usr/local/bin/mycelium
+else
+    $SUDO mv mycelium-linux-x64 /usr/local/bin/mycelium
+fi
+
+echo "✅ All prerequisites installed!"
+if [ "$EUID" -ne 0 ]; then
+    echo "📝 Note: You may need to log out and back in for Docker group changes to take effect"
+fi
+```
+
+Save this as `install-prerequisites.sh`, make it executable with `chmod +x install-prerequisites.sh`, and run it with `./install-prerequisites.sh`.
+
+**Optional: Create a non-root user with sudo privileges**
+If you prefer not to run as root (recommended for security), create a user with sudo access:
+
+```bash
+# Create a new user (replace 'muser' with your preferred username)
+useradd -m -s /bin/bash muser
+usermod -aG sudo muser
+usermod -aG docker muser
+
+# Set password for the user
+passwd muser
+
+# Switch to the new user
+su - muser
+
+# Now you can use sudo for privileged operations
+# Update the PATH for Rust if needed
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Security Note**: All commands in this guide include `sudo` and should be run as a non-root user with sudo privileges. The deployment script will refuse to run as root for security reasons. Services will run as the deployment user, not as root.
+
+### Verification Commands
+After installing all prerequisites, verify with:
+```bash
+# Check all required tools
+docker --version
+docker-compose --version
+cargo --version
+node --version
+npm --version
+mycelium --version
+nginx -v
+certbot --version
+```
+
+## Step 0: Prepare TFGrid VM (Automated Setup)
+
+**Important**: TFGrid VMs start as root, but the deployment requires a non-root user with sudo privileges for security. Use the automated preparation script:
+
+```bash
+# Download and run the preparation script (run as root)
+curl -fsSL https://raw.githubusercontent.com/mik-tf/mycelium-matrix-chat/main/scripts/prepare-tfgrid-vm.sh -o prepare-tfgrid-vm.sh
+chmod +x prepare-tfgrid-vm.sh
+./prepare-tfgrid-vm.sh
+```
+
+**What the script does:**
+- ✅ Creates `muser` with sudo privileges
+- ✅ Installs all prerequisites (Docker, Rust, Node.js, etc.)
+- ✅ Configures firewall and security
+- ✅ Verifies installation
+- ✅ Provides next steps
+
+After the script completes, switch to the deployment user:
+
+```bash
+# Switch to the deployment user
+su - muser
+
+# Change the default password immediately
+passwd
+```
+
+**Manual Setup** (if you prefer to do it step-by-step):
+
+```bash
+# Create dedicated deployment user (run as root)
+useradd -m -s /bin/bash muser
+usermod -aG sudo muser
+passwd muser
+
+# Switch to the deployment user
+su - muser
+```
 
 ## Step 1: Deploy Ubuntu 24.04 VM with Mycelium
 
@@ -86,11 +300,11 @@ mycelium status
 Now that Mycelium is configured and connected, you can SSH into your VM:
 
 ```bash
-# SSH into your VM using Mycelium
-ssh root@[YOUR_MYCELIUM_IP]
+# SSH into your VM using Mycelium as the deployment user
+ssh muser@[YOUR_MYCELIUM_IP]
 
 # Example:
-ssh root@44a:1bca:f2:c72d:ff0f:0:200:2
+ssh muser@44a:1bca:f2:c72d:ff0f:0:200:2
 ```
 
 **Note**: The first connection might take a few seconds as Mycelium establishes the P2P connection.
@@ -104,13 +318,13 @@ For VSCode Remote Explorer to work properly with Mycelium IPv6 addresses:
 # Add to ~/.ssh/config
 Host mycelium-chat
     HostName [YOUR_MYCELIUM_IP]
-    User root
+    User muser
     IdentityFile ~/.ssh/id_ed25519
 
 # Example:
 Host mycelium-chat
     HostName 44a:1bca:f2:c72d:ff0f:0:200:2
-    User root
+    User muser
     IdentityFile ~/.ssh/id_ed25519
 ```
 
@@ -124,7 +338,7 @@ Host mycelium-chat
 #### Alternative Direct Connection
 If the hostname doesn't work, connect directly:
 ```
-ssh root@[YOUR_MYCELIUM_IP]
+ssh muser@[YOUR_MYCELIUM_IP]
 ```
 
 ### Verify Connection
@@ -138,7 +352,7 @@ Welcome to Ubuntu 24.04 LTS (GNU/Linux 6.8.0-31-generic x86_64)
  * Support:        https://ubuntu.com/pro
 
 Last login: [timestamp] from [your-local-ip]
-mycelium@vm-name:~$
+muser@vm-name:~$
 ```
 
 ## Step 3: Clone the Repository
@@ -178,28 +392,33 @@ make ops-production
 
 ### What Happens During Deployment
 
+**Important**: Ensure all prerequisites are installed before running the deployment script. If the script fails due to missing dependencies, install them using the commands in the Prerequisites section above.
+
 The deployment script will:
 
 1. **Pre-flight Checks**
    - Verify Ubuntu 24.04 compatibility
    - Check Mycelium connectivity
-   - Validate system requirements
+   - Validate system requirements (Docker, Rust, Node.js, etc.)
 
 2. **System Setup**
-   - Install Rust, Node.js, PostgreSQL, Nginx
+   - Verify prerequisite installations
+   - Set up PostgreSQL database via Docker
    - Configure firewall and security
-   - Set up SSL certificates
+   - Set up SSL certificates with Certbot
 
 3. **Application Deployment**
    - Build Matrix Bridge (Rust)
    - Build Web Gateway (Rust)
    - Build React frontend
    - Configure systemd services
+   - Set up Docker containers for database and services
 
 4. **Production Validation**
    - Test all services
    - Verify API endpoints
    - Validate SSL certificates
+   - Check database connectivity
 
 ### Deployment Output
 
@@ -318,6 +537,31 @@ make ops-backup
 ## Troubleshooting
 
 ### Common Issues
+
+#### Missing Prerequisites
+```bash
+# If deployment fails with missing tools, install prerequisites:
+# Note: Omit 'sudo' if running as root (TFGrid VMs)
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git curl wget build-essential pkg-config libssl-dev
+sudo apt install -y docker.io docker-compose nginx certbot python3-certbot-nginx
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt-get install -y nodejs
+
+# Install Mycelium
+wget https://github.com/threefoldtech/mycelium/releases/latest/download/mycelium-linux-x64
+chmod +x mycelium-linux-x64
+sudo mv mycelium-linux-x64 /usr/local/bin/mycelium
+
+# Then retry deployment
+make ops-production
+```
 
 #### SSH Connection Fails
 ```bash
