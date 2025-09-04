@@ -115,6 +115,53 @@ make docs-phase2           # Open Phase 2 deployment guide
 
 ### For Operators & Deployers
 
+#### TFGrid Production Deployment (New Ansible-Based System)
+
+**Prerequisites**:
+- Linux/macOS system with bash
+- [tfcmd](https://github.com/threefoldtech/tfcmd) installed and configured
+- [Ansible](https://www.ansible.com/) installed
+- ThreeFold account with sufficient TFT balance
+- SSH key pair (auto-detected from `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`)
+
+**Complete TFGrid Deployment**:
+```bash
+# Clone the repository
+git clone https://github.com/mik-tf/mycelium-matrix-chat.git
+cd mycelium-matrix-chat
+
+# Deploy everything in one command (VM + preparation + MMC)
+make deploy
+
+# Or deploy step-by-step:
+make vm           # Deploy Ubuntu 24.04 VM on TFGrid using tfcmd
+make prepare      # Prepare VM with ansible (install Docker, Rust, Node.js, etc.)
+make app          # Deploy MMC application components
+make validate     # Validate the deployment
+
+# Access your deployment
+make connect      # SSH into the deployed VM
+make status       # Check deployment status
+```
+
+**Deployment Process**:
+1. **VM Deployment** (`make vm`): Deploys Ubuntu 24.04 VM on TFGrid using tfcmd, extracts mycelium IPv6 address
+2. **VM Preparation** (`make prepare`): Ansible installs all prerequisites (Docker, Rust, Node.js, Mycelium, Nginx, security)
+3. **Application Deployment** (`make app`): Deploys MMC components with systemd services
+4. **Validation** (`make validate`): Health checks and service verification
+
+**Management Commands**:
+```bash
+make status       # Check deployment status and services
+make connect      # SSH into deployed VM
+make logs         # View ansible deployment logs
+make clean        # Clean deployment artifacts (keeps VM)
+make clean-all    # Clean everything including VM destruction
+make help         # Show all available commands
+```
+
+#### Legacy Production Deployment (Shell Scripts)
+
 **Phase 2 Production Deployment**:
 ```bash
 # Automatic deployment to chat.threefold.pro
@@ -133,14 +180,14 @@ curl -k https://chat.threefold.pro/api/health
 # Local development
 docker-compose up -d              # Standard dev environment
 
-# Local with Matrix Bridge  
+# Local with Matrix Bridge
 make setup-phase2-local           # Includes bridge service
 
 # Production deployment
 make setup-phase2-prod            # Full production setup
 ```
 
-**See [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) and [Phase 2 Deployment](docs/ops/phase-2-deploy.md) for complete procedures.**
+**See [Deployment Guide](docs/DEPLOYMENT_GUIDE.md), [Phase 2 Deployment](docs/ops/phase-2-deploy.md), and [Ansible Deployment Guide](docs/ops/ansible-deployment.md) for complete procedures.**
 
 ## 🏗️ Architecture
 
@@ -152,22 +199,22 @@ graph TB
         WebUser[Web Users<br/>chat.threefold.pro]
         EnhancedUser[Enhanced Users<br/>Local Mycelium + Web App]
     end
-    
+
     subgraph "Application Layer"
         WebApp[Matrix Web Application]
         DetectionService[Mycelium Detection Service]
     end
-    
+
     subgraph "Federation Layer"
         MatrixHomeserver[Matrix Homeserver]
         MyceliumBridge[Matrix-Mycelium Bridge]
         MyceliumNode[Homeserver Mycelium Node]
     end
-    
+
     subgraph "Network Layer"
         MyceliumOverlay[Mycelium Overlay Network]
     end
-    
+
     WebUser --> WebApp
     EnhancedUser --> WebApp
     WebApp --> DetectionService
@@ -184,7 +231,34 @@ graph TB
 3. **Seamless Upgrade**: Enhanced users automatically get P2P routing
 4. **Full Compatibility**: Both user types communicate without restrictions
 
-**See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed technical design.**
+### TFGrid Deployment Architecture
+
+The new ansible-based deployment creates a complete MMC environment on TFGrid:
+
+```mermaid
+graph LR
+    A[Developer/Local] --> B[make deploy]
+    B --> C[tfcmd deploy VM]
+    C --> D[Ubuntu 24.04 VM<br/>+ Mycelium IP]
+    D --> E[Ansible Inventory<br/>Generation]
+    E --> F[Ansible Playbooks]
+    F --> G[VM Preparation<br/>Docker, Rust, Node.js]
+    G --> H[MMC Deployment<br/>Backend + Frontend]
+    H --> I[Validation & Health<br/>Checks]
+    I --> J[Production MMC<br/>on TFGrid]
+
+    K[Management] --> L[make connect]
+    L --> M[SSH to VM]
+    M --> N[Systemd Services<br/>Logs & Monitoring]
+```
+
+**Deployment Components**:
+1. **tfcmd Integration**: Deploys Ubuntu 24.04 VM with Mycelium networking
+2. **Ansible Automation**: 9 modular roles for complete system setup
+3. **Service Management**: systemd services for all MMC components
+4. **Health Validation**: Automated testing and monitoring
+
+**See [Architecture Documentation](docs/ARCHITECTURE.md) and [Ansible Deployment Guide](docs/ops/ansible-deployment.md) for detailed technical design.**
 
 ## 📁 Project Structure
 
@@ -196,6 +270,19 @@ mycelium-matrix-chat/
 ├── 📁 frontend/               # React web application (PHASE 1 Complete)
 │   ├── src/                   # Source code
 │   └── public/                # Static assets
+├── 📁 ansible.cfg             # Ansible configuration for TFGrid deployment
+├── 📁 inventory/              # Ansible inventory (auto-generated)
+├── 📁 group_vars/             # Ansible variables for MMC servers
+├── 📁 roles/                  # Ansible roles for deployment
+│   ├── common/                # System preparation and user setup
+│   ├── docker/                # Docker installation and configuration
+│   ├── rust/                  # Rust toolchain installation
+│   ├── nodejs/                # Node.js installation
+│   ├── mycelium/              # Mycelium P2P client setup
+│   ├── nginx/                 # Web server configuration
+│   ├── security/              # Firewall and SSH hardening
+│   ├── mmc_deploy/            # MMC application deployment
+│   └── validation/            # Post-deployment validation
 ├── 📁 config/                 # Configuration files for production
 │   ├── nginx.conf            # Nginx reverse proxy configuration
 │   └── mycelium.toml         # Mycelium node configuration
@@ -211,10 +298,17 @@ mycelium-matrix-chat/
 │   ├── TODO.md               # Updated project status
 │   └── ops/
 │       ├── phase-1-test.md
-│       └── phase-2-deploy.md  # Phase 2 deployment guide
-├── deploy.sh                 # Production deployment script (Complete)
+│       ├── phase-2-deploy.md  # Phase 2 deployment guide
+│       └── ansible-deployment.md # New ansible deployment guide
+├── 📁 scripts/                # Legacy deployment scripts
+│   ├── deploy.sh             # Production deployment script (Complete)
+│   ├── tfcmd-deploy.sh       # VM deployment using tfcmd
+│   ├── prepare-tfgrid-vm.sh  # VM preparation script
+│   └── ...
+├── site.yml                  # Main Ansible playbook
+├── deploy-tfcmd-ansible.sh   # New unified TFGrid + Ansible deployment
 ├── .env.production          # Production environment configuration
-├── Makefile                 # Enhanced with Phase 2 commands
+├── Makefile                 # Enhanced with TFGrid deployment commands
 └── Target/                  # Rust compilation artifacts
 ```
 
@@ -285,6 +379,9 @@ mycelium-matrix-chat/
 - **Reverse Proxy**: Nginx with security headers and rate limiting
 - **Development Tools**: Enhanced Makefile with 15+ deployment commands
 - **Deployment**: Automated script ready for chat.threefold.pro (`deploy.sh`)
+- **TFGrid Deployment**: Complete ansible-based deployment system with tfcmd integration
+- **Configuration Management**: 9 modular ansible roles for automated setup
+- **Service Management**: systemd services with health monitoring and logging
 
 ### Networking 🔗 ** MATRIX INTEGRATION VERIFIED**
 - **Matrix Protocol**: Real federation with matrix.org verified
@@ -299,7 +396,7 @@ mycelium-matrix-chat/
 # Backend tests
 cd backend && cargo test
 
-# Frontend tests  
+# Frontend tests
 cd frontend && npm test
 
 # Integration tests
@@ -314,6 +411,22 @@ k6 run tests/load-test.js
 - **Integration Tests**: End-to-end federation and messaging flows
 - **Performance Tests**: Load testing and latency benchmarks
 - **Security Tests**: Penetration testing and vulnerability scanning
+
+### TFGrid Deployment Testing
+```bash
+# Test deployment validation
+make validate
+
+# Check service status
+make status
+
+# View deployment logs
+make logs
+
+# Manual service verification
+curl http://[VM_IP]/health
+curl http://[VM_IP]:8080/api/health
+```
 
 ## 🤝 Contributing
 
@@ -336,12 +449,21 @@ We welcome contributions! **Phase 1 is complete** with a working MVP, and we're 
 1. **Plan Your Contribution**: Check [TODO.md](docs/TODO.md) for current tasks
 2. **Fork and Branch**: `git checkout -b feature/your-awesome-feature`
 3. **Development Environment**: Use Makefile commands:
-   - `make setup-full` - Complete dev setup
-   - `make test-phase1` - Verify existing functionality
-   - `make docs-phase2` - Understand Phase 2 goals
+    - `make setup-full` - Complete dev setup
+    - `make test-phase1` - Verify existing functionality
+    - `make docs-phase2` - Understand Phase 2 goals
 4. **Test Thoroughly**: `make test-phase2` for new features
-5. **Document Changes**: Update relevant docs in `/docs`
-6. **Create PR**: Conventional commit messages, detailed description
+5. **Test Deployment**: Use the new ansible system:
+    - `make deploy` - Test full TFGrid deployment
+    - `make validate` - Verify deployment works
+6. **Document Changes**: Update relevant docs in `/docs`
+7. **Create PR**: Conventional commit messages, detailed description
+
+### Deployment Contributions
+- **Test the ansible deployment system** on TFGrid
+- **Improve ansible roles** for better reliability
+- **Add monitoring and logging** enhancements
+- **Contribute to deployment documentation**
 
 ### Areas Needing Contributors
 - **🚨 Matrix Bridge JS Client**: Connect frontend to our Rust bridge service
@@ -361,6 +483,75 @@ make docs-phase2              # Read deployment guide
 # Deploy to production when ready
 make setup-phase2-prod        # Deploy complete system
 ```
+
+## 🔧 Troubleshooting
+
+### TFGrid Deployment Issues
+
+#### VM Deployment Problems
+```bash
+# Check tfcmd status
+tfcmd list
+
+# Verify SSH key
+ls -la ~/.ssh/id_ed25519.pub
+
+# Check ThreeFold balance
+tfcmd balance
+```
+
+#### Ansible Connection Issues
+```bash
+# Test SSH connection manually
+ssh -i ~/.ssh/id_ed25519 root@[VM_IP]
+
+# Check ansible connectivity
+ansible -i inventory/hosts.ini mmc_servers -m ping
+
+# View ansible logs
+make logs
+```
+
+#### Service Deployment Issues
+```bash
+# Check systemd services
+make status
+
+# View service logs on VM
+ssh root@[VM_IP] "journalctl -u mmc-* -f"
+
+# Restart services
+ssh root@[VM_IP] "systemctl restart mmc-web-gateway mmc-matrix-bridge mmc-frontend"
+```
+
+#### Common Issues
+
+**SSH Connection Failed**
+- Verify VM IP in `inventory/hosts.ini`
+- Check SSH key permissions: `chmod 600 ~/.ssh/id_ed25519`
+- Ensure VM has finished booting (wait 2-3 minutes after deployment)
+
+**Ansible Role Failed**
+- Check ansible logs: `make logs`
+- Verify internet connectivity on VM
+- Run roles individually: `ansible-playbook -i inventory/hosts.ini site.yml --tags role_name`
+
+**Services Not Starting**
+- Check service status: `make status`
+- View detailed logs: `ssh root@[VM_IP] "journalctl -u mmc-service-name"`
+- Verify dependencies: `ssh root@[VM_IP] "systemctl list-dependencies mmc-service-name"`
+
+**Web Interface Not Accessible**
+- Check Nginx status: `ssh root@[VM_IP] "systemctl status nginx"`
+- Verify firewall: `ssh root@[VM_IP] "ufw status"`
+- Test local access: `ssh root@[VM_IP] "curl http://localhost"`
+
+### Getting Help
+
+1. **Check Documentation**: [Ansible Deployment Guide](docs/ops/ansible-deployment.md)
+2. **View Logs**: `make logs` for deployment logs
+3. **Manual Testing**: SSH into VM and check services manually
+4. **Clean Retry**: `make clean && make deploy` for fresh deployment
 
 ## 📄 License
 
