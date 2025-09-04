@@ -15,10 +15,10 @@ This document defines the complete API specification for the Mycelium-Matrix int
 ## 🔗 Base URLs
 
 ### Production
-- **Web Application**: `https://chat.threefold.pro`
-- **Matrix Client API**: `https://chat.threefold.pro/_matrix/client/v3`
-- **Matrix Federation API**: `https://chat.threefold.pro/_matrix/federation/v1`
-- **Enhancement API**: `https://chat.threefold.pro/api/v1/mycelium`
+- **Web Application**: `https://chat.projectmycelium.org`
+- **Matrix Client API**: `https://chat.projectmycelium.org/_matrix/client/v3`
+- **Matrix Federation API**: `https://chat.projectmycelium.org/_matrix/federation/v1`
+- **Enhancement API**: `https://chat.projectmycelium.org/api/v1/mycelium`
 - **Bridge Management**: `http://localhost:8080/api/v1/bridge` (internal)
 
 ### Development
@@ -46,13 +46,13 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "user_id": "@username:chat.threefold.pro",
+  "user_id": "@username:chat.projectmycelium.org",
   "access_token": "MDAxOGxvY2F0aW9uIG1hdHJpeC5vcmc",
-  "home_server": "chat.threefold.pro",
+  "home_server": "chat.projectmycelium.org",
   "device_id": "GHTYAJCE",
   "well_known": {
     "m.homeserver": {
-      "base_url": "https://chat.threefold.pro"
+      "base_url": "https://chat.projectmycelium.org"
     }
   }
 }
@@ -95,7 +95,7 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "room_id": "!room123:chat.threefold.pro"
+  "room_id": "!room123:chat.projectmycelium.org"
 }
 ```
 
@@ -122,7 +122,7 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "event_id": "$event123:chat.threefold.pro"
+  "event_id": "$event123:chat.projectmycelium.org"
 }
 ```
 
@@ -140,7 +140,7 @@ Authorization: Bearer MDAxOGxvY2F0aW9uIG1hdHJpeC5vcmc
   "next_batch": "s123_456_789",
   "rooms": {
     "join": {
-      "!room123:chat.threefold.pro": {
+      "!room123:chat.projectmycelium.org": {
         "timeline": {
           "events": [
             {
@@ -149,9 +149,9 @@ Authorization: Bearer MDAxOGxvY2F0aW9uIG1hdHJpeC5vcmc
                 "msgtype": "m.text",
                 "body": "Hello!"
               },
-              "sender": "@user:chat.threefold.pro",
+              "sender": "@user:chat.projectmycelium.org",
               "origin_server_ts": 1234567890,
-              "event_id": "$event123:chat.threefold.pro",
+              "event_id": "$event123:chat.projectmycelium.org",
               "unsigned": {
                 "mycelium_routed": true,
                 "mycelium_latency_ms": 45
@@ -376,8 +376,8 @@ Content-Type: application/json
   "message_type": "matrix.federation.event",
   "content": {
     "type": "m.room.message",
-    "room_id": "!room123:chat.threefold.pro",
-    "sender": "@user:chat.threefold.pro",
+    "room_id": "!room123:chat.projectmycelium.org",
+    "sender": "@user:chat.projectmycelium.org",
     "content": {
       "msgtype": "m.text",
       "body": "Federation message"
@@ -432,7 +432,7 @@ Authorization: Bearer internal_api_key
 **Response:**
 ```json
 {
-  "room_id": "!room123:chat.threefold.pro",
+  "room_id": "!room123:chat.projectmycelium.org",
   "state_hash": "sha256:abc123...",
   "last_updated": "2024-01-01T12:00:00Z",
   "federation_servers": [
@@ -467,7 +467,7 @@ Content-Type: application/json
 #### Connection
 ```javascript
 // Client-side WebSocket connection
-const ws = new WebSocket('wss://chat.threefold.pro/api/v1/ws');
+const ws = new WebSocket('wss://chat.projectmycelium.org/api/v1/ws');
 
 // Authentication after connection
 ws.send(JSON.stringify({
@@ -496,15 +496,15 @@ ws.send(JSON.stringify({
 {
   "type": "matrix_event",
   "data": {
-    "room_id": "!room123:chat.threefold.pro",
+    "room_id": "!room123:chat.projectmycelium.org",
     "event": {
       "type": "m.room.message",
       "content": {
         "msgtype": "m.text",
         "body": "Real-time message"
       },
-      "sender": "@user:chat.threefold.pro",
-      "event_id": "$event123:chat.threefold.pro"
+      "sender": "@user:chat.projectmycelium.org",
+      "event_id": "$event123:chat.projectmycelium.org"
     }
   }
 }
@@ -537,7 +537,7 @@ All APIs use consistent error formatting:
     "code": "M_NOT_FOUND",
     "message": "Room not found",
     "details": {
-      "room_id": "!nonexistent:chat.threefold.pro",
+      "room_id": "!nonexistent:chat.projectmycelium.org",
       "suggestion": "Check the room ID and try again"
     }
   },
@@ -581,7 +581,7 @@ Access tokens are JWT tokens with the following structure:
     "typ": "JWT"
   },
   "payload": {
-    "user_id": "@username:chat.threefold.pro",
+    "user_id": "@username:chat.projectmycelium.org",
     "device_id": "DEVICEID",
     "iat": 1234567890,
     "exp": 1234571490,

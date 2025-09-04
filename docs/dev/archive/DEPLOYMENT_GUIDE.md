@@ -55,7 +55,7 @@ vim .env.production  # Edit configuration
 docker-compose -f docker-compose.prod.yml up -d
 
 # Verify deployment
-curl https://chat.threefold.pro/api/v1/health
+curl https://chat.projectmycelium.org/api/v1/health
 ```
 
 #### 2. Docker Compose Configuration
@@ -139,8 +139,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        REACT_APP_API_BASE_URL: https://chat.threefold.pro
-        REACT_APP_MATRIX_BASE_URL: https://chat.threefold.pro
+        REACT_APP_API_BASE_URL: https://chat.projectmycelium.org
+        REACT_APP_MATRIX_BASE_URL: https://chat.projectmycelium.org
     networks:
       - frontend
 
@@ -188,11 +188,11 @@ MYCELIUM_PRIVATE_KEY_PATH=/var/lib/mycelium/private_key.bin
 MYCELIUM_PEERS=tcp://188.40.132.242:9651,quic://185.69.166.8:9651
 
 # Matrix Configuration
-MATRIX_SERVER_NAME=chat.threefold.pro
+MATRIX_SERVER_NAME=chat.projectmycelium.org
 MATRIX_REGISTRATION_SHARED_SECRET=very_secure_secret_here
 
 # Web Configuration
-DOMAIN=chat.threefold.pro
+DOMAIN=chat.projectmycelium.org
 ENABLE_HTTPS=true
 SSL_CERT_PATH=/etc/nginx/ssl/cert.pem
 SSL_KEY_PATH=/etc/nginx/ssl/key.pem
@@ -419,14 +419,14 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
-    - host: chat.threefold.pro
+    - host: chat.projectmycelium.org
       paths:
         - path: /
           pathType: Prefix
   tls:
     - secretName: chat-mycelium-com-tls
       hosts:
-        - chat.threefold.pro
+        - chat.projectmycelium.org
 
 resources:
   limits:
@@ -553,7 +553,7 @@ listen_addr = "0.0.0.0:8080"
 workers = 4
 
 [matrix]
-server_name = "chat.threefold.pro"
+server_name = "chat.projectmycelium.org"
 registration_shared_secret = "very_secure_secret"
 database_url = "postgresql://user:pass@localhost/synapse"
 
@@ -621,14 +621,14 @@ http {
     # HTTPS redirect
     server {
         listen 80;
-        server_name chat.threefold.pro;
+        server_name chat.projectmycelium.org;
         return 301 https://$server_name$request_uri;
     }
 
     # Main server block
     server {
         listen 443 ssl http2;
-        server_name chat.threefold.pro;
+        server_name chat.projectmycelium.org;
 
         # SSL configuration
         ssl_certificate /etc/nginx/ssl/cert.pem;
@@ -813,7 +813,7 @@ certbot certonly --nginx \
   --email admin@mycelium.com \
   --agree-tos \
   --no-eff-email \
-  -d chat.threefold.pro
+  -d chat.projectmycelium.org
 
 # Auto-renewal with cron
 echo "0 12 * * * /usr/bin/certbot renew --quiet" | crontab -
@@ -868,7 +868,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-BASE_URL="${1:-https://chat.threefold.pro}"
+BASE_URL="${1:-https://chat.projectmycelium.org}"
 
 echo "Running health checks for $BASE_URL"
 
@@ -944,20 +944,20 @@ export let options = {
 
 export default function() {
   // Test frontend
-  let response = http.get('https://chat.threefold.pro');
+  let response = http.get('https://chat.projectmycelium.org');
   check(response, {
     'frontend status is 200': (r) => r.status === 200,
     'frontend loads quickly': (r) => r.timings.duration < 1000,
   });
 
   // Test API health
-  response = http.get('https://chat.threefold.pro/api/v1/health');
+  response = http.get('https://chat.projectmycelium.org/api/v1/health');
   check(response, {
     'API health status is 200': (r) => r.status === 200,
   });
 
   // Test Matrix endpoint
-  response = http.get('https://chat.threefold.pro/_matrix/federation/v1/version');
+  response = http.get('https://chat.projectmycelium.org/_matrix/federation/v1/version');
   check(response, {
     'Matrix federation accessible': (r) => r.status === 200,
   });

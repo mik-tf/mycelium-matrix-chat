@@ -237,13 +237,13 @@ make clean                    # Environment cleanup
 - **🌉 Matrix Bridge Successfully Initialized**: Running as PID 48239 on localhost:8081 with HTTP server responding
 - **📡 Network Binding Confirmed**: Matrix bridge is properly listening on port 8081 (verified via netstat)
 - **🐳 Docker Production Ready**: Full multi-service deployment infrastructure configured (matrix-bridge + postgresql + web-gateway + nginx + ssl)
-- **🔐 SSL Automation Complete**: deploy.sh script ready for Let's Encrypt certificates on chat.threefold.pro
+- **🔐 SSL Automation Complete**: deploy.sh script ready for Let's Encrypt certificates on chat.projectmycelium.org
 - **📝 Real-time Logging**: Bridge logs streaming to `/tmp/bridge.log` with full debugging output
 - **🗄️ Database Integration**: PostgreSQL connection verified with proper wait times (30s + 15s fallback)
 
 ### ✅ **CORE DEPLOYMENT INFRASTRUCTURE ACHIEVED:**
 - **Production Docker Setup**: Complete `docker-compose.prod.yml` with PostgreSQL, Mycelium, Matrix Bridge, Web Gateway, Nginx + SSL (January 8-9)
-- **SSL Certificate Automation**: Let's Encrypt integration via `deploy.sh` for `chat.threefold.pro` (January 9)
+- **SSL Certificate Automation**: Let's Encrypt integration via `deploy.sh` for `chat.projectmycelium.org` (January 9)
 - **Phase 2 Local Deploy**: `make setup-phase2-local` working with database connectivity and bridge startup (January 9)
 - **Phase 2 Documentation**: `/docs/ops/phase-2-deploy.md` complete setup guide (January 8)
 - **DevOps Enhancement**: Makefile Phase 2 targets (`setup-phase2-local`, `setup-phase2-db`, `build-bridge`, etc.) (January 8-9)
@@ -331,7 +331,7 @@ BACKEND INTEGRATION SUCCESSFULLY COMPLETED! 🎉
 
 ### ⏭️ **NEXT PHASE PREPARATION:**
 - **Phase 2 Mycelium Bridge**: P2P federation enhancement
-- **Production Deployment**: `chat.threefold.pro` launch preparation
+- **Production Deployment**: `chat.projectmycelium.org` launch preparation
 - **Performance Optimization**: Advanced Matrix routing
 
 ### Current Achievement Summary:
@@ -818,9 +818,9 @@ This TODO list serves as the comprehensive implementation checklist for the Myce
 ### Given Phase 1 MVP ACHIEVEMENT, fast-track to Production Deployment
 
 #### Immediate Next Actions (Week 1 of Phase 2):
-1. **Deploy MVP to chat.threefold.pro** 🚀
+1. **Deploy MVP to chat.projectmycelium.org** 🚀
    - [ ] Set up production domain and SSL certificates
-   - [ ] Deploy Phase 1 MVP to chat.threefold.pro
+   - [ ] Deploy Phase 1 MVP to chat.projectmycelium.org
    - [ ] Test real-world Matrix federation with matrix.org
    - [ ] Validate user onboarding flow end-to-end
 
@@ -837,7 +837,7 @@ This TODO list serves as the comprehensive implementation checklist for the Myce
 - **Week 7-8 (Original Phase 3)**: Production hardening + community launch
 
 #### 🎯 **UPDATED SUCCESS METRICS:**
-- **Web Chat Access**: ✅ Day 1 - `chat.threefold.pro` live
+- **Web Chat Access**: ✅ Day 1 - `chat.projectmycelium.org` live
 - **Mycelium Enhancement**: Week 2 - Automatic P2P routing
 - **Mobile Apps**: Week 3 - iOS/Android with embedded Mycelium
 - **Federation Scale**: Week 4 - Multiple homeservers federation
@@ -884,7 +884,7 @@ This TODO list serves as the comprehensive implementation checklist for the Myce
 #### 🛫 **Sprint 3: Go-Live Preparation**
 
 ##### **Production Deployment**
-- **SSL Certificate Generation**: Let's Encrypt automation for chat.threefold.pro
+- **SSL Certificate Generation**: Let's Encrypt automation for chat.projectmycelium.org
 - **Docker Compose Production**: Deploy multi-service stack to production
 - **Load Balancer Setup**: Configure HAProxy for high availability
 - **Monitoring Integration**: Set up Prometheus metrics and Grafana dashboards

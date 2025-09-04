@@ -27,8 +27,8 @@
 #### Step 1: Discovery & Access
 ```mermaid
 graph LR
-    A[Hears about chat.threefold.pro] --> B[Opens web browser]
-    B --> C[Visits chat.threefold.pro]
+    A[Hears about chat.projectmycelium.org] --> B[Opens web browser]
+    B --> C[Visits chat.projectmycelium.org]
     C --> D[Sees clean, familiar interface]
     D --> E[Clicks 'Get Started']
 ```
@@ -95,7 +95,7 @@ graph LR
 ```mermaid
 graph LR
     A[Download Mycelium] --> B[Install and run]
-    B --> C[Return to chat.threefold.pro]
+    B --> C[Return to chat.projectmycelium.org]
     C --> D[Automatic detection]
     D --> E[Upgrade notification]
     E --> F[Enhanced mode activated]

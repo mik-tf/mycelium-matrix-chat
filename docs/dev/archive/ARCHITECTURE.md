@@ -11,7 +11,7 @@ The Mycelium-Matrix integration creates a hybrid communication system that combi
 ```mermaid
 graph TB
     subgraph "User Layer"
-        WebUser[Web Users<br/>chat.threefold.pro]
+        WebUser[Web Users<br/>chat.projectmycelium.org]
         EnhancedUser[Enhanced Users<br/>Local Mycelium + Web App]
     end
     

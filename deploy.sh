@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🚀 Starting deployment to chat.threefold.pro..."
+echo "🚀 Starting deployment to chat.projectmycelium.org..."
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -21,13 +21,13 @@ sudo certbot certonly --nginx \
   --email admin@threefold.io \
   --agree-tos \
   --no-eff-email \
-  -d chat.threefold.pro \
-  -d www.chat.threefold.pro
+  -d chat.projectmycelium.org \
+  -d www.chat.projectmycelium.org
 
 # Create ssl directory and copy certificates
 mkdir -p ssl
-sudo cp /etc/letsencrypt/live/chat.threefold.pro/fullchain.pem ssl/cert.pem
-sudo cp /etc/letsencrypt/live/chat.threefold.pro/privkey.pem ssl/key.pem
+sudo cp /etc/letsencrypt/live/chat.projectmycelium.org/fullchain.pem ssl/cert.pem
+sudo cp /etc/letsencrypt/live/chat.projectmycelium.org/privkey.pem ssl/key.pem
 
 # Build and start production services
 export DB_USER="${DB_USER:-production_user}"
@@ -43,8 +43,8 @@ sleep 30
 
 # Test deployment
 echo "🔍 Testing deployment..."
-curl -k https://chat.threefold.pro/api/v1/health || echo "Health check failed"
-curl -I -k https://chat.threefold.pro/ || echo "Frontend check failed"
+curl -k https://chat.projectmycelium.org/api/v1/health || echo "Health check failed"
+curl -I -k https://chat.projectmycelium.org/ || echo "Frontend check failed"
 
 # Set up SSL auto-renewal
 sudo systemctl enable nginx
@@ -59,7 +59,7 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/post/nginx-renewal.sh
 
 # Display success message
 echo "✅ Deployment completed successfully!"
-echo "🌐 Access your application at https://chat.threefold.pro/"
+echo "🌐 Access your application at https://chat.projectmycelium.org/"
 echo "🔧 Monitoring logs: docker-compose -f docker/docker-compose.prod.yml logs -f"
 
 # Add cron job for monitoring (optional)

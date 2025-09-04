@@ -97,16 +97,16 @@ This guide covers the complete production deployment of the Mycelium-Matrix Chat
 ### 2. Domain and SSL Setup
 
 ```bash
-# Configure domain (e.g., chat.threefold.pro)
+# Configure domain (e.g., chat.projectmycelium.org)
 # Obtain SSL certificates (Let's Encrypt recommended)
 
 # Example nginx configuration for SSL termination
 server {
     listen 443 ssl http2;
-    server_name chat.threefold.pro;
+    server_name chat.projectmycelium.org;
 
-    ssl_certificate /etc/letsencrypt/live/chat.threefold.pro/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/chat.threefold.pro/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/chat.projectmycelium.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.projectmycelium.org/privkey.pem;
 
     location / {
         proxy_pass http://localhost:8080;
@@ -184,13 +184,13 @@ make test-p2p-performance
 
 ```bash
 # Bridge health
-curl https://chat.threefold.pro/api/v1/bridge/status
+curl https://chat.projectmycelium.org/api/v1/bridge/status
 
 # Federation endpoints
-curl https://chat.threefold.pro/_matrix/federation/v1/version
+curl https://chat.projectmycelium.org/_matrix/federation/v1/version
 
 # Mycelium connectivity
-curl https://chat.threefold.pro/api/v1/bridge/mycelium/status
+curl https://chat.projectmycelium.org/api/v1/bridge/mycelium/status
 ```
 
 ### Key Metrics to Monitor
@@ -229,7 +229,7 @@ docker exec mycelium-matrix-postgres pg_dump -U mycelium_user mycelium_matrix > 
 tar -czf config_backup_$(date +%Y%m%d).tar.gz /etc/mycelium-matrix/
 
 # Federation routes backup
-curl https://chat.threefold.pro/api/v1/bridge/routes > routes_backup_$(date +%Y%m%d).json
+curl https://chat.projectmycelium.org/api/v1/bridge/routes > routes_backup_$(date +%Y%m%d).json
 ```
 
 ## 🚨 Troubleshooting
@@ -251,13 +251,13 @@ curl http://localhost:8989/api/v1/admin
 #### Federation Not Working
 ```bash
 # Test federation endpoints
-curl https://chat.threefold.pro/_matrix/federation/v1/version
+curl https://chat.projectmycelium.org/_matrix/federation/v1/version
 
 # Check bridge federation routes
-curl https://chat.threefold.pro/api/v1/bridge/routes
+curl https://chat.projectmycelium.org/api/v1/bridge/routes
 
 # Validate Mycelium P2P connection
-curl https://chat.threefold.pro/api/v1/bridge/mycelium/status
+curl https://chat.projectmycelium.org/api/v1/bridge/mycelium/status
 ```
 
 #### Performance Issues
@@ -268,7 +268,7 @@ df -h
 free -h
 
 # Monitor federation metrics
-curl https://chat.threefold.pro/api/v1/bridge/metrics
+curl https://chat.projectmycelium.org/api/v1/bridge/metrics
 
 # Check Mycelium network status
 mycelium --status

@@ -10,12 +10,12 @@ This project integrates Matrix federation protocol with Mycelium's encrypted IPv
 - **Universal Compatibility**: Users can communicate regardless of their technical setup
 - **Enhanced Security**: Double encryption (Matrix E2EE + Mycelium transport)
 - **Censorship Resistance**: Decentralized overlay networking bypasses traditional internet infrastructure
-- **Zero Setup Barrier**: Immediate web access at chat.threefold.pro
+- **Zero Setup Barrier**: Immediate web access at chat.projectmycelium.org
 
 ## 🏗️ Architecture Highlights
 
 ### Progressive Enhancement Model
-- **Web-First**: Anyone can access chat.threefold.pro in their browser
+- **Web-First**: Anyone can access chat.projectmycelium.org in their browser
 - **Auto-Detection**: Web app detects local Mycelium installation
 - **Enhanced Mode**: Users with Mycelium get automatic P2P overlay networking
 - **Full Compatibility**: Enhanced and standard users communicate seamlessly

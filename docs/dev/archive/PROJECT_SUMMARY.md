@@ -87,7 +87,7 @@ The project has reached **full architectural maturity** with:
 - **Week 16**: Full feature set including P2P and ecosystem tools
 
 ### Success Criteria
-- **Functionality**: Web users can chat seamlessly via chat.threefold.pro
+- **Functionality**: Web users can chat seamlessly via chat.projectmycelium.org
 - **Enhancement**: Users with Mycelium automatically get P2P benefits
 - **Compatibility**: Enhanced and standard users communicate without issues
 - **Performance**: Message delivery <200ms local, <1000ms global

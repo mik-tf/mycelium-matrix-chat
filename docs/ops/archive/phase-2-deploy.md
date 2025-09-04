@@ -14,7 +14,7 @@ Phase 2 focuses on Mycelium P2P enhancement with Matrix federation routing, prov
 ## 🏗️ Quick Phase 2 Setup
 
 ### Pre-deployment Checklist
-- [ ] Phase 1 MVP deployed and running: `https://chat.threefold.pro`
+- [ ] Phase 1 MVP deployed and running: `https://chat.projectmycelium.org`
 - [ ] All production configs prepared (see Phase 1 setup)
 - [ ] Mycelium integration prepared
 - [ ] SSL certificates active (via Let's Encrypt)
@@ -30,7 +30,7 @@ make setup-phase2-local
 
 ### Option B: Production Deployment
 ```bash
-# Deploy complete Phase 2 to chat.threefold.pro
+# Deploy complete Phase 2 to chat.projectmycelium.org
 make setup-phase2-prod
 
 # Or manual deployment:
@@ -95,14 +95,14 @@ make test-federation
 ### End-to-End User Testing
 
 #### For Media users (Standard HTTPS):
-1. Open `https://chat.threefold.pro`
+1. Open `https://chat.projectmycelium.org`
 2. Login with `@user:matrix.org`
 3. Create/join rooms normally
 4. ✅ Should work without Mycelium (fallback routing)
 
 #### For Mycelium users (Enhanced P2P):
 1. User has Mycelium installed/configured
-2. Open `https://chat.threefold.pro`
+2. Open `https://chat.projectmycelium.org`
 3. Login flow should auto-detect Mycelium
 4. ✅ Messages route through P2P overlay
 5. ✅ UI shows "Enhanced Connection" status
@@ -113,7 +113,7 @@ make test-federation
 make test-matrix-org
 
 # Cross-homeserver routing
-# 1. User A on mycelium-chat.threefold.pro
+# 1. User A on mycelium-chat.projectmycelium.org
 # 2. User B on matrix.example.com
 # 3. Messages should route through Matrix federation + Mycelium overlay
 ```
@@ -123,13 +123,13 @@ make test-matrix-org
 ### Health Checks (Phase 2)
 ```bash
 # Bridge health
-curl https://chat.threefold.pro/api/bridge/health
+curl https://chat.projectmycelium.org/api/bridge/health
 
 # Mycelium node health
-curl https://chat.threefold.pro/api/mycelium/status
+curl https://chat.projectmycelium.org/api/mycelium/status
 
 # Federation status
-curl https://chat.threefold.pro/api/matrix/federation/status
+curl https://chat.projectmycelium.org/api/matrix/federation/status
 ```
 
 ### Logging & Troubleshooting
@@ -175,7 +175,7 @@ docker-compose -f docker/docker-compose.prod.yml restart mycelium-node
 #### Progressive Enhancement Failing
 ```bash
 # Check frontend Mycelium detection
-curl https://chat.threefold.pro/api/mycelium/detect
+curl https://chat.projectmycelium.org/api/mycelium/detect
 
 # Test client-side Mycelium lib
 make test-frontend-mycelium
@@ -219,9 +219,9 @@ make setup-phase2-prod     # Production deployment
 make test-phase2           # Complete testing suite
 
 # Service URLs
-Frontend:    https://chat.threefold.pro
-Bridge API:  https://chat.threefold.pro/api/bridge
-Mycelium:    https://chat.threefold.pro/api/mycelium
+Frontend:    https://chat.projectmycelium.org
+Bridge API:  https://chat.projectmycelium.org/api/bridge
+Mycelium:    https://chat.projectmycelium.org/api/mycelium
 Matrix Bridge: http://localhost:8081 (local dev)
 
 # Logs & Debugging

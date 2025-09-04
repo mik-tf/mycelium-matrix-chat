@@ -181,7 +181,7 @@
 
 ### MVP Milestone (Week 8)
 **Criteria for Success:**
-- [ ] Web users can chat via chat.threefold.pro
+- [ ] Web users can chat via chat.projectmycelium.org
 - [ ] Users with Mycelium get enhanced P2P routing
 - [ ] Matrix federation works over Mycelium overlay
 - [ ] Basic security and encryption verified

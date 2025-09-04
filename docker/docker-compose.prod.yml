@@ -70,8 +70,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        REACT_APP_API_BASE_URL: https://chat.threefold.pro
-        REACT_APP_MATRIX_BASE_URL: https://chat.threefold.pro
+        REACT_APP_API_BASE_URL: https://chat.projectmycelium.org
+        REACT_APP_MATRIX_BASE_URL: https://chat.projectmycelium.org
     networks:
       - frontend
 

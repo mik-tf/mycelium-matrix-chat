@@ -10,7 +10,7 @@
 
 **The next generation of decentralized messaging**
 
-*Phase 1 MVP Complete • Production-Ready for chat.threefold.pro*
+*Phase 1 MVP Complete • Production-Ready for chat.projectmycelium.org*
 
 *Combining Matrix protocol's proven federation with Mycelium's encrypted overlay networking*
 
@@ -23,7 +23,7 @@
 Mycelium-Matrix creates a revolutionary decentralized messaging system that enhances Matrix federation with Mycelium's encrypted IPv6 overlay networking. This integration delivers:
 
 - **🔒 Enhanced Security**: Double encryption (Matrix E2EE + Mycelium transport)
-- **🌐 Universal Access**: Works immediately at chat.threefold.pro - no installation required
+- **🌐 Universal Access**: Works immediately at chat.projectmycelium.org - no installation required
 - **⚡ Progressive Enhancement**: Auto-detects and utilizes local Mycelium for P2P benefits
 - **🛡️ Censorship Resistance**: Decentralized overlay routing bypasses traditional internet controls
 - **🔄 Full Compatibility**: Matrix ecosystem integration with zero breaking changes
@@ -32,7 +32,7 @@ Mycelium-Matrix creates a revolutionary decentralized messaging system that enha
 
 ```mermaid
 graph LR
-    A[User visits chat.threefold.pro] --> B{Mycelium detected?}
+    A[User visits chat.projectmycelium.org] --> B{Mycelium detected?}
     B -->|No| C[Standard Web Mode<br/>🌐 HTTPS + Encrypted Federation]
     B -->|Yes| D[Enhanced P2P Mode<br/>🔒 Direct Overlay Routing]
     C --> E[Chat Works Perfectly]
@@ -70,13 +70,13 @@ graph LR
 ### For Users
 
 **Instant Access** - No installation required:
-1. Visit **[chat.threefold.pro](https://chat.threefold.pro)** in your web browser
+1. Visit **[chat.projectmycelium.org](https://chat.projectmycelium.org)** in your web browser
 2. Create an account or sign in
 3. Start chatting securely!
 
 **Enhanced Experience** - Optional P2P benefits:
 1. Install [Mycelium](https://github.com/threefoldtech/mycelium/releases) on your device
-2. Return to chat.threefold.pro
+2. Return to chat.projectmycelium.org
 3. Enjoy automatic P2P encryption and enhanced performance
 
 ### For Developers
@@ -106,7 +106,7 @@ open http://localhost:8081  # Matrix Bridge (Phase 2)
 make test-phase1           # Test complete Phase 1 suite
 make test-phase2           # Test Phase 2 components
 make setup-phase2-local    # Deploy Matrix Bridge locally
-make setup-phase2-prod     # Deploy to production (chat.threefold.pro)
+make setup-phase2-prod     # Deploy to production (chat.projectmycelium.org)
 make docs                  # Open Phase 1 docs
 make docs-phase2           # Open Phase 2 deployment guide
 ```
@@ -164,7 +164,7 @@ make help         # Show all available commands
 
 **Phase 2 Production Deployment**:
 ```bash
-# Automatic deployment to chat.threefold.pro
+# Automatic deployment to chat.projectmycelium.org
 make setup-phase2-prod    # Sets up production environment + SSL
 
 # Manual deployment with deploy script
@@ -172,7 +172,7 @@ chmod +x deploy.sh
 sudo ./deploy.sh          # Handles SSL, containers, and services
 
 # Check deployment status
-curl -k https://chat.threefold.pro/api/health
+curl -k https://chat.projectmycelium.org/api/health
 ```
 
 **Multi-environment Support**:
@@ -196,7 +196,7 @@ make setup-phase2-prod            # Full production setup
 ```mermaid
 graph TB
     subgraph "User Layer"
-        WebUser[Web Users<br/>chat.threefold.pro]
+        WebUser[Web Users<br/>chat.projectmycelium.org]
         EnhancedUser[Enhanced Users<br/>Local Mycelium + Web App]
     end
 
@@ -226,7 +226,7 @@ graph TB
 
 ### Progressive Enhancement Flow
 
-1. **Universal Access**: All users can access chat.threefold.pro immediately
+1. **Universal Access**: All users can access chat.projectmycelium.org immediately
 2. **Auto-Detection**: JavaScript detects local Mycelium installation
 3. **Seamless Upgrade**: Enhanced users automatically get P2P routing
 4. **Full Compatibility**: Both user types communicate without restrictions
@@ -338,11 +338,11 @@ mycelium-matrix-chat/
 - ✅ **Testing Infrastructure** - Automated testing setup with Makefile commands (Implemented)
 - ✅ **Real Matrix Integration** - Complete with matrix.org federation support (Verified)
 
-**Result**: Fully functional dramatically MVP at chat.threefold.pro ready for production
+**Result**: Fully functional dramatically MVP at chat.projectmycelium.org ready for production
 
 ### Phase 2: P2P Enhancement 🔄 **90% COMPLETE**
 - ✅ **Matrix Bridge Service** - Rust service with Docker production images (Built at localhost:8081)
-- ✅ **Production Deployment Infra** - Docker Compose, SSL, Nginx config for chat.threefold.pro (Ready)
+- ✅ **Production Deployment Infra** - Docker Compose, SSL, Nginx config for chat.projectmycelium.org (Ready)
 - ✅ **Development & Testing Setup** - Complete Phase 2 development cycle with Makefile (Implemented)
 - ⏳ **Mycelium JS Integration** - Frontend P2P routing library (Next immediate task)
 - ⏳ **Progressive Enhancement** - Auto Mycelium detection in chat interface (Ready to implement)
@@ -378,7 +378,7 @@ mycelium-matrix-chat/
 - **SSL/TLS**: Let's Encrypt automated certificates
 - **Reverse Proxy**: Nginx with security headers and rate limiting
 - **Development Tools**: Enhanced Makefile with 15+ deployment commands
-- **Deployment**: Automated script ready for chat.threefold.pro (`deploy.sh`)
+- **Deployment**: Automated script ready for chat.projectmycelium.org (`deploy.sh`)
 - **TFGrid Deployment**: Complete ansible-based deployment system with tfcmd integration
 - **Configuration Management**: 9 modular ansible roles for automated setup
 - **Service Management**: systemd services with health monitoring and logging
@@ -434,7 +434,7 @@ We welcome contributions! **Phase 1 is complete** with a working MVP, and we're 
 
 ### Current Project State
 - ✅ **Phase 1 MVP**: React frontend + Matrix backend running at `localhost:5173`
-- ✅ **Production Ready**: Complete deployment configuration for `chat.threefold.pro`
+- ✅ **Production Ready**: Complete deployment configuration for `chat.projectmycelium.org`
 - 🔄 **Phase 2 Active**: Building Matrix Bridge service (90% complete)
 - 🚀 **Next Focus**: Mycelium JS client library integration
 
