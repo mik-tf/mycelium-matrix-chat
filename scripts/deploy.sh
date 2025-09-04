@@ -269,6 +269,7 @@ wait_for_vm_ready() {
 
     log "⏳ Waiting for VM to be ready (timeout: ${timeout}s)..."
     log "Testing connectivity to: $ip"
+    # Note: IPv6 addresses work without brackets on this system
 
     local elapsed=0
     while [ $elapsed -lt "$timeout" ]; do
@@ -277,15 +278,16 @@ wait_for_vm_ready() {
         ssh_key_path=$(get_config "deployment.ssh_key_path")
         ssh_key_path=$(eval echo "$ssh_key_path")
 
-        # Format IPv6 address properly for SSH
-        if [[ "$ip" =~ : ]]; then
-            ssh_target="root@[$ip]"
-        else
-            ssh_target="root@$ip"
-        fi
+        # SSH target - no brackets needed for IPv6 on this system
+        ssh_target="root@$ip"
 
         log "Testing SSH connection to $ssh_target"
-        if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+
+        # First, try to add the host key to known_hosts to avoid interactive prompts
+        log "Adding host key to known_hosts..."
+        ssh-keyscan -H "$ip" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+        if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
                 -i "$ssh_key_path" \
                 "$ssh_target" "echo 'VM is ready'" 2>/dev/null; then
             success "VM is ready for deployment (SSH successful)"
@@ -293,7 +295,7 @@ wait_for_vm_ready() {
         else
             log "SSH connection failed, waiting ${check_interval}s..."
             # Debug: show what SSH error we get
-            ssh_output=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ssh_output=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
                 -i "$ssh_key_path" \
                 "$ssh_target" "echo 'test'" 2>&1 || true)
             log "SSH debug output: $ssh_output"
@@ -322,12 +324,8 @@ execute_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    # Format IPv6 address properly for SSH
-    if [[ "$ip" =~ : ]]; then
-        ssh_target="$user@[$ip]"
-    else
-        ssh_target="$user@$ip"
-    fi
+    # SSH target - no brackets needed for IPv6 on this system
+    ssh_target="$user@$ip"
 
     if ! ssh -i "$ssh_key_path" \
               -o ConnectTimeout=10 \
@@ -353,20 +351,16 @@ copy_to_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    # Format IPv6 address properly for SCP
-    if [[ "$ip" =~ : ]]; then
-        scp_target="$user@[$ip]:$remote_path"
-    else
-        scp_target="$user@$ip:$remote_path"
-    fi
+    # SSH target - no brackets needed for IPv6 on this system
+    ssh_target="$user@$ip"
 
-    if ! scp -i "$ssh_key_path" \
+    # Use SSH with base64 encoding instead of SCP for better IPv6 compatibility
+    if ! cat "$local_file" | base64 | ssh -i "$ssh_key_path" \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
-              "$local_file" \
-              "$scp_target" 2>&1; then
+              "$ssh_target" "base64 -d > '$remote_path' && chmod +x '$remote_path'" 2>&1; then
 
-        error "File copy failed: $local_file -> $scp_target"
+        error "File copy failed: $local_file -> $ssh_target:$remote_path"
         return 1
     fi
 }
