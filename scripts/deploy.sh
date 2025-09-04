@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Force bash shell regardless of user's default shell
+export SHELL=/bin/bash
+
 # =====================================================================================
 # Mycelium-Matrix Chat - Unified Deployment Script
 # =====================================================================================
@@ -278,27 +281,48 @@ wait_for_vm_ready() {
         ssh_key_path=$(get_config "deployment.ssh_key_path")
         ssh_key_path=$(eval echo "$ssh_key_path")
 
-        # SSH target - no brackets needed for IPv6 on this system
-        ssh_target="root@$ip"
+        # SSH target - IPv6 addresses MUST be bracketed in user@host format
+        if [[ "$ip" =~ : ]]; then
+            # IPv6 address - wrap in brackets for proper SSH parsing
+            ssh_target="root@[$ip]"
+        else
+            # IPv4 address - no brackets needed
+            ssh_target="root@$ip"
+        fi
 
         log "Testing SSH connection to $ssh_target"
 
-        # First, try to add the host key to known_hosts to avoid interactive prompts
-        log "Adding host key to known_hosts..."
-        ssh-keyscan -H "$ip" >> ~/.ssh/known_hosts 2>/dev/null || true
-
-        if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
-                -i "$ssh_key_path" \
-                "$ssh_target" "echo 'VM is ready'" 2>/dev/null; then
+        # Simple approach: use basic SSH connection test without complex variable expansion
+        log "Testing SSH connectivity (simplified approach)..."
+        
+        # Export variables for sub-shell
+        export TEST_IP="$ip"
+        export TEST_SSH_KEY="$ssh_key_path"
+        
+        # Use direct SSH connection test with proper IPv6 bracketing
+        if ssh -o ConnectTimeout=10 \
+               -o StrictHostKeyChecking=no \
+               -o UserKnownHostsFile=/dev/null \
+               -o LogLevel=ERROR \
+               -o BatchMode=yes \
+               -i "$ssh_key_path" \
+               "$ssh_target" \
+               "echo 'VM is ready'" 2>/dev/null; then
             success "VM is ready for deployment (SSH successful)"
             return 0
         else
             log "SSH connection failed, waiting ${check_interval}s..."
-            # Debug: show what SSH error we get
-            ssh_output=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
-                -i "$ssh_key_path" \
-                "$ssh_target" "echo 'test'" 2>&1 || true)
-            log "SSH debug output: $ssh_output"
+            
+            # Try alternative connection test with more verbose output
+            debug "Attempting connection test with debug output..."
+            ssh_debug_output=$(ssh -o ConnectTimeout=5 \
+                                  -o StrictHostKeyChecking=no \
+                                  -o UserKnownHostsFile=/dev/null \
+                                  -o LogLevel=DEBUG1 \
+                                  -i "$ssh_key_path" \
+                                  "$ssh_target" \
+                                  "echo 'test'" 2>&1 || echo "Connection failed")
+            debug "SSH test result: $ssh_debug_output"
         fi
 
         sleep "$check_interval"
@@ -324,18 +348,28 @@ execute_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    # SSH target - no brackets needed for IPv6 on this system
-    ssh_target="$user@$ip"
+    # SSH target - IPv6 addresses MUST be bracketed in user@host format
+    if [[ "$ip" =~ : ]]; then
+        # IPv6 address - wrap in brackets for proper SSH parsing
+        ssh_target="$user@[$ip]"
+    else
+        # IPv4 address - no brackets needed
+        ssh_target="$user@$ip"
+    fi
 
+    # Use consistent SSH options with improved IPv6 compatibility
     if ! ssh -i "$ssh_key_path" \
               -o ConnectTimeout=10 \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -o LogLevel=ERROR \
+              -o AddressFamily=any \
               "$ssh_target" \
               "timeout $timeout bash -c '$command'" 2>&1; then
 
         error "Remote command failed on $ssh_target"
+        debug "Failed command: $command"
+        debug "SSH target: $ssh_target"
         return 1
     fi
 }
@@ -351,16 +385,27 @@ copy_to_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    # SSH target - no brackets needed for IPv6 on this system
-    ssh_target="$user@$ip"
+    # SSH target - IPv6 addresses MUST be bracketed in user@host format
+    if [[ "$ip" =~ : ]]; then
+        # IPv6 address - wrap in brackets for proper SSH parsing
+        ssh_target="$user@[$ip]"
+    else
+        # IPv4 address - no brackets needed
+        ssh_target="$user@$ip"
+    fi
 
-    # Use SSH with base64 encoding instead of SCP for better IPv6 compatibility
+    # Use SSH with base64 encoding for better IPv6 compatibility and add error handling
     if ! cat "$local_file" | base64 | ssh -i "$ssh_key_path" \
+              -o ConnectTimeout=10 \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
+              -o LogLevel=ERROR \
+              -o AddressFamily=any \
               "$ssh_target" "base64 -d > '$remote_path' && chmod +x '$remote_path'" 2>&1; then
 
         error "File copy failed: $local_file -> $ssh_target:$remote_path"
+        debug "Source file: $local_file"
+        debug "Target: $ssh_target:$remote_path"
         return 1
     fi
 }
