@@ -268,28 +268,35 @@ wait_for_vm_ready() {
     check_interval=$(get_config "remote.vm_ready_check_interval" "10")
 
     log "⏳ Waiting for VM to be ready (timeout: ${timeout}s)..."
+    log "Testing connectivity to: $ip"
 
     local elapsed=0
     while [ $elapsed -lt "$timeout" ]; do
-        # First try ping6 to check if VM is reachable
-        if ping6 -c 1 -W 2 "$ip" >/dev/null 2>&1; then
-            log "VM is reachable via ping6"
+        # Try SSH connection directly (since ping6 works manually but not in script)
+        local ssh_key_path
+        ssh_key_path=$(get_config "deployment.ssh_key_path")
+        ssh_key_path=$(eval echo "$ssh_key_path")
 
-            # Then try SSH as root (original method)
-            local ssh_key_path
-            ssh_key_path=$(get_config "deployment.ssh_key_path")
-            ssh_key_path=$(eval echo "$ssh_key_path")
-
-            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                    -i "$ssh_key_path" \
-                    "root@$ip" "echo 'VM is ready'" 2>/dev/null; then
-                success "VM is ready for deployment (SSH successful)"
-                return 0
-            else
-                log "VM reachable but SSH not ready yet, waiting ${check_interval}s..."
-            fi
+        # Format IPv6 address properly for SSH
+        if [[ "$ip" =~ : ]]; then
+            ssh_target="root@[$ip]"
         else
-            log "VM not reachable yet, waiting ${check_interval}s..."
+            ssh_target="root@$ip"
+        fi
+
+        log "Testing SSH connection to $ssh_target"
+        if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                -i "$ssh_key_path" \
+                "$ssh_target" "echo 'VM is ready'" 2>/dev/null; then
+            success "VM is ready for deployment (SSH successful)"
+            return 0
+        else
+            log "SSH connection failed, waiting ${check_interval}s..."
+            # Debug: show what SSH error we get
+            ssh_output=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                -i "$ssh_key_path" \
+                "$ssh_target" "echo 'test'" 2>&1 || true)
+            log "SSH debug output: $ssh_output"
         fi
 
         sleep "$check_interval"
@@ -315,15 +322,22 @@ execute_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    if ! ssh -i "$ssh_key_path" \
-             -o ConnectTimeout=10 \
-             -o StrictHostKeyChecking=no \
-             -o UserKnownHostsFile=/dev/null \
-             -o LogLevel=ERROR \
-             "$user@$ip" \
-             "timeout $timeout bash -c '$command'" 2>&1; then
+    # Format IPv6 address properly for SSH
+    if [[ "$ip" =~ : ]]; then
+        ssh_target="$user@[$ip]"
+    else
+        ssh_target="$user@$ip"
+    fi
 
-        error "Remote command failed on $user@$ip"
+    if ! ssh -i "$ssh_key_path" \
+              -o ConnectTimeout=10 \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -o LogLevel=ERROR \
+              "$ssh_target" \
+              "timeout $timeout bash -c '$command'" 2>&1; then
+
+        error "Remote command failed on $ssh_target"
         return 1
     fi
 }
@@ -339,13 +353,20 @@ copy_to_remote() {
     local ssh_key_path
     ssh_key_path=$(eval echo "$(get_config "deployment.ssh_key_path")")
 
-    if ! scp -i "$ssh_key_path" \
-             -o StrictHostKeyChecking=no \
-             -o UserKnownHostsFile=/dev/null \
-             "$local_file" \
-             "$user@$ip:$remote_path" 2>&1; then
+    # Format IPv6 address properly for SCP
+    if [[ "$ip" =~ : ]]; then
+        scp_target="$user@[$ip]:$remote_path"
+    else
+        scp_target="$user@$ip:$remote_path"
+    fi
 
-        error "File copy failed: $local_file -> $user@$ip:$remote_path"
+    if ! scp -i "$ssh_key_path" \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              "$local_file" \
+              "$scp_target" 2>&1; then
+
+        error "File copy failed: $local_file -> $scp_target"
         return 1
     fi
 }
