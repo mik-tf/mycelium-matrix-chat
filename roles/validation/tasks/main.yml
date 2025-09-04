@@ -1,0 +1,52 @@
+---
+# Deployment validation tasks
+
+- name: Validate Web Gateway health
+  uri:
+    url: "http://localhost:{{ web_gateway_port }}/health"
+    method: GET
+    status_code: 200
+  register: web_gateway_health
+  failed_when: web_gateway_health.status != 200
+
+- name: Validate Frontend accessibility
+  uri:
+    url: "http://localhost:{{ frontend_port }}"
+    method: GET
+    status_code: 200
+  register: frontend_health
+  failed_when: frontend_health.status != 200
+
+- name: Validate Matrix Bridge health
+  uri:
+    url: "http://localhost:{{ matrix_bridge_port }}/health"
+    method: GET
+    status_code: 200
+  register: bridge_health
+  failed_when: bridge_health.status != 200
+
+- name: Validate Nginx configuration
+  command: nginx -t
+  become: true
+  register: nginx_test
+  failed_when: nginx_test.rc != 0
+
+- name: Check systemd services status
+  service:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - mmc-web-gateway
+    - mmc-matrix-bridge
+    - mmc-frontend
+    - nginx
+  become: true
+
+- name: Display validation results
+  debug:
+    msg:
+      - "✅ Web Gateway: {{ web_gateway_health.status }}"
+      - "✅ Frontend: {{ frontend_health.status }}"
+      - "✅ Matrix Bridge: {{ bridge_health.status }}"
+      - "✅ Nginx: {{ nginx_test.rc == 0 | ternary('Valid', 'Invalid') }}"
+      - "🎉 All validations passed! MMC is successfully deployed."

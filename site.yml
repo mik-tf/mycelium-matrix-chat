@@ -1,0 +1,66 @@
+---
+# Mycelium-Matrix Chat Deployment Playbook
+# This playbook orchestrates the complete deployment of MMC on TFGrid
+
+- name: Prepare MMC Server
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: common
+      tags: [common, preparation]
+
+- name: Install Docker
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: docker
+      tags: [docker, preparation]
+
+- name: Install Rust Toolchain
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: rust
+      tags: [rust, preparation]
+
+- name: Install Node.js
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: nodejs
+      tags: [nodejs, preparation]
+
+- name: Install Mycelium
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: mycelium
+      tags: [mycelium, preparation]
+
+- name: Install and Configure Nginx
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: nginx
+      tags: [nginx, preparation]
+
+- name: Configure Security
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: security
+      tags: [security, preparation]
+
+- name: Deploy MMC Application
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: mmc_deploy
+      tags: [deploy, application]
+
+- name: Validate Deployment
+  hosts: mmc_servers
+  become: yes
+  roles:
+    - role: validation
+      tags: [validate, post-deploy]

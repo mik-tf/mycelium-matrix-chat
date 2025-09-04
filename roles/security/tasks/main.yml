@@ -1,0 +1,48 @@
+---
+# Security configuration tasks
+
+- name: Enable UFW firewall
+  ufw:
+    state: enabled
+  become: true
+
+- name: Allow SSH connections
+  ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+  become: true
+
+- name: Allow HTTP connections
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  with_items: "{{ firewall_allowed_ports }}"
+  become: true
+
+- name: Reload UFW
+  ufw:
+    state: reloaded
+  become: true
+
+- name: Configure SSH hardening
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+  with_dict:
+    PermitRootLogin: "no"
+    PasswordAuthentication: "no"
+    X11Forwarding: "no"
+    MaxAuthTries: "3"
+    ClientAliveInterval: "60"
+    ClientAliveCountMax: "3"
+  become: true
+  notify: restart_ssh
+
+- name: Restart SSH service
+  service:
+    name: ssh
+    state: restarted
+  become: true

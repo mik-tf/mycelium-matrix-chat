@@ -1,0 +1,70 @@
+---
+# Mycelium-Matrix Chat Deployment Variables
+
+# Deployment user configuration
+deploy_user: muser
+deploy_user_home: "/home/{{ deploy_user }}"
+
+# System packages
+system_packages:
+  - curl
+  - wget
+  - git
+  - make
+  - build-essential
+  - pkg-config
+  - libssl-dev
+  - software-properties-common
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - net-tools
+  - htop
+  - jq
+  - ufw
+
+# Docker configuration
+docker_packages:
+  - docker.io
+  - docker-compose
+
+# Rust configuration
+rust_user: "{{ deploy_user }}"
+rust_home: "{{ deploy_user_home }}"
+
+# Node.js configuration
+nodejs_version: "20"
+nodejs_packages:
+  - nodejs
+
+# Mycelium configuration
+mycelium_version: "v0.6.1"
+mycelium_binary: "mycelium-x86_64-unknown-linux-musl.tar.gz"
+mycelium_url: "https://github.com/threefoldtech/mycelium/releases/download/{{ mycelium_version }}/{{ mycelium_binary }}"
+
+# Nginx configuration
+nginx_packages:
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+
+# MMC Application configuration
+mmc_repo: "https://github.com/mik-tf/mycelium-matrix-chat"
+mmc_branch: "main"
+mmc_dir: "{{ deploy_user_home }}/mycelium-matrix-chat"
+
+# Service ports
+web_gateway_port: 8080
+frontend_port: 5173
+matrix_bridge_port: 8081
+postgres_port: 5432
+
+# Firewall configuration
+firewall_allowed_ports:
+  - 22    # SSH
+  - 80    # HTTP
+  - 443   # HTTPS
+  - "{{ web_gateway_port }}"
+  - "{{ frontend_port }}"
+  - "{{ matrix_bridge_port }}"

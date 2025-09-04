@@ -1,0 +1,16 @@
+[Unit]
+Description=MMC Web Gateway
+After=network.target
+
+[Service]
+Type=simple
+User={{ deploy_user }}
+WorkingDirectory={{ mmc_dir }}/backend/web-gateway
+ExecStart={{ rust_home }}/.cargo/bin/cargo run --release --quiet
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

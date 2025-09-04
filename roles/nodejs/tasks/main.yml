@@ -1,0 +1,29 @@
+---
+# Node.js installation tasks
+
+- name: Add NodeSource repository for Node.js {{ nodejs_version }}
+  shell: "curl -fsSL https://deb.nodesource.com/setup_{{ nodejs_version }}.x | bash -"
+  become: true
+
+- name: Install Node.js packages
+  apt:
+    name: "{{ nodejs_packages }}"
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Verify Node.js installation
+  command: node --version
+  register: node_version
+  become: true
+
+- name: Verify npm installation
+  command: npm --version
+  register: npm_version
+  become: true
+
+- name: Display Node.js versions
+  debug:
+    msg:
+      - "Node.js: {{ node_version.stdout }}"
+      - "npm: {{ npm_version.stdout }}"

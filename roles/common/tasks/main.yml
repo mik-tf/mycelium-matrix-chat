@@ -1,0 +1,89 @@
+---
+# Common system preparation tasks for MMC deployment
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: true
+
+- name: Upgrade system packages
+  apt:
+    upgrade: dist
+    update_cache: yes
+  become: true
+
+- name: Install required system packages
+  apt:
+    name: "{{ system_packages }}"
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Set hostname based on inventory name
+  hostname:
+    name: "{{ inventory_hostname }}"
+  become: true
+
+- name: Update /etc/hosts with inventory name
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s+.*$'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+    state: present
+  become: true
+
+- name: Configure timezone
+  timezone:
+    name: UTC
+  become: true
+
+- name: Create deploy user
+  user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    create_home: yes
+    state: present
+    groups: sudo
+  become: true
+
+- name: Configure passwordless sudo for deploy user
+  lineinfile:
+    path: /etc/sudoers.d/{{ deploy_user }}
+    line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  become: true
+
+- name: Set no password for deploy user
+  command: passwd -d {{ deploy_user }}
+  become: true
+
+- name: Create .ssh directory for deploy user
+  file:
+    path: "{{ deploy_user_home }}/.ssh"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0700'
+  become: true
+
+- name: Copy SSH keys from root to deploy user
+  copy:
+    src: /root/.ssh/authorized_keys
+    dest: "{{ deploy_user_home }}/.ssh/authorized_keys"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0600'
+    remote_src: yes
+  become: true
+  ignore_errors: yes
+
+- name: Ensure deploy user owns their home directory
+  file:
+    path: "{{ deploy_user_home }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    recurse: yes
+  become: true

@@ -1,0 +1,8 @@
+---
+# Handlers for security role
+
+- name: restart_ssh
+  service:
+    name: ssh
+    state: restarted
+  become: true

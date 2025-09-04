@@ -1,0 +1,16 @@
+[Unit]
+Description=MMC Matrix Bridge
+After=network.target
+
+[Service]
+Type=simple
+User={{ deploy_user }}
+WorkingDirectory={{ mmc_dir }}/backend/matrix-bridge
+ExecStart={{ mmc_dir }}/backend/matrix-bridge/target/release/matrix-bridge
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
