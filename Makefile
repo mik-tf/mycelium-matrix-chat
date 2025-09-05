@@ -113,9 +113,9 @@ clean-all:
 	@echo "🧹 Cleaning up everything including VM..."
 	@echo "⚠️  This will destroy the VM and remove all deployment artifacts"
 	@echo ""
-	@read -p "Continue? (y/N): " confirm; \
+	@read -p "Continue? (y/N): " confirm && \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
-		@echo "💥 Destroying VM..."; \
+		echo "💥 Destroying VM..."; \
 		if [ -f "scripts/tfcmd-cancel.sh" ]; then \
 			chmod +x scripts/tfcmd-cancel.sh; \
 			./scripts/tfcmd-cancel.sh || echo "⚠️  VM destruction may have failed"; \
