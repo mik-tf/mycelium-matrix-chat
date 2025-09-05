@@ -47,6 +47,7 @@ mycelium-matrix-chat/
 2. **Ansible** installed (`pip install ansible`)
 3. **SSH key pair** exists
 4. **Mycelium network** connected (recommended)
+5. **ThreeFold mnemonic** (see [Security Documentation](./security.md) for secure handling)
 
 ### Deploy MMC
 

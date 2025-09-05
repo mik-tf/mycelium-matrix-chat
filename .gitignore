@@ -67,6 +67,25 @@ dev.db
 secrets/
 *secret*
 
+# Infrastructure credentials (contains mnemonic)
+infrastructure/credentials.auto.tfvars
+
+# Terraform/OpenTofu state files
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.backup
+infrastructure/*.tfstate.*
+
+# Ansible temporary files
+inventory/hosts.ini.backup
+ansible.log
+*.retry
+
+# WireGuard configuration
+wg-mmc.conf
+*.conf
+
 # Build artifacts for other platforms
 *.exe
 *.dll
