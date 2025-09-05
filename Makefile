@@ -196,8 +196,8 @@ clean-all:
 	@read -p "Continue? (y/N): " confirm && \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		echo "💥 Destroying VM..."; \
-		@echo "   Checking for ThreeFold mnemonic..."; \
-		@if [ -n "$$TF_VAR_mnemonic" ]; then \
+		echo "   Checking for ThreeFold mnemonic..."; \
+		if [ -n "$$TF_VAR_mnemonic" ]; then \
 			echo "   ✅ Using TF_VAR_mnemonic environment variable"; \
 			MNEMONIC_VALUE="$$TF_VAR_mnemonic"; \
 		elif [ -f "$$HOME/.config/threefold/mnemonic" ]; then \
@@ -213,7 +213,7 @@ clean-all:
 		fi; \
 		if [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ] && [ -n "$$MNEMONIC_VALUE" ]; then \
 		    echo "   Trying infrastructure cleanup..."; \
-		    cd infrastructure && TF_VAR_mnemonic="$$MNEMONIC_VALUE" (tofu destroy -auto-approve 2>/dev/null || terraform destroy -auto-approve 2>/dev/null) || echo "⚠️  Infrastructure cleanup may have failed"; \
+		    cd infrastructure && ( TF_VAR_mnemonic="$$MNEMONIC_VALUE" tofu destroy -auto-approve 2>/dev/null || TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform destroy -auto-approve 2>/dev/null ) || echo "⚠️  Infrastructure cleanup may have failed"; \
 		    cd ..; \
 		fi; \
 		if [ ! -f "scripts/tfcmd-cancel.sh" ] && [ ! -d "infrastructure" ]; then \
