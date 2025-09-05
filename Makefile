@@ -43,31 +43,46 @@ inventory:
 # Connect to deployed VM
 connect: inventory
 	@echo "🔗 Connecting to MMC server..."
-	@VM_IP=$$(grep "ansible_host" inventory/hosts.ini | head -1 | awk '{print $$2}' | cut -d'=' -f2); \
-	if [ -z "$$VM_IP" ]; then \
-		echo "❌ Could not find VM IP in inventory"; \
-		exit 1; \
-	fi; \
-	echo "Connecting to: $$VM_IP"; \
-	if [[ "$$VM_IP" =~ : ]]; then \
-		ssh -i ~/.ssh/id_ed25519 root@[$$VM_IP]; \
+	@if grep -q "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini; then \
+		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
+		if [ -z "$$VM_IP" ]; then \
+			echo "❌ Could not parse VM IP from inventory"; \
+			exit 1; \
+		fi; \
+		echo "Connecting to: $$VM_IP"; \
+		if echo "$$VM_IP" | grep -q ':'; then \
+			ssh -i ~/.ssh/id_ed25519 root@[$$VM_IP]; \
+		else \
+			ssh -i ~/.ssh/id_ed25519 root@$$VM_IP; \
+		fi; \
 	else \
-		ssh -i ~/.ssh/id_ed25519 root@$$VM_IP; \
+		echo "ℹ️  No deployed VM found in inventory"; \
+		echo "   Run 'make deploy' to deploy MMC first"; \
+		exit 1; \
 	fi
 
 # Check deployment status
 status: inventory
 	@echo "📊 MMC Deployment Status"
 	@echo "========================"
-	@VM_IP=$$(grep "ansible_host" inventory/hosts.ini | head -1 | awk '{print $$2}' | cut -d'=' -f2); \
-	if [ -z "$$VM_IP" ]; then \
-		echo "❌ No VM IP found in inventory"; \
-		exit 1; \
-	fi; \
-	echo "🌐 VM IP: $$VM_IP"; \
-	echo ""; \
-	echo "🔍 Checking services..."; \
-	ansible -i inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line || echo "⚠️  Could not check services (VM may not be ready)"
+	@if grep -q "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini; then \
+		echo "✅ Found deployed VM in inventory"; \
+		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
+		if [ -z "$$VM_IP" ]; then \
+			echo "❌ Could not parse VM IP from inventory"; \
+			exit 1; \
+		fi; \
+		echo "🌐 VM IP: $$VM_IP"; \
+		echo ""; \
+		echo "🔍 Checking services..."; \
+		ansible -i inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
+	else \
+		echo "ℹ️  No deployed VM found in inventory"; \
+		echo "   Run 'make deploy' to deploy MMC first"; \
+		echo ""; \
+		echo "📋 Current inventory:"; \
+		cat inventory/hosts.ini | grep -v "^#" | grep -v "^$$" | head -5; \
+	fi
 
 # Show ansible logs
 logs:
