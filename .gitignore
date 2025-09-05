@@ -96,3 +96,7 @@ wg-mmc.conf
 # Key Bin
 
 priv_key.bin
+
+# Sensitive
+
+hosts.ini
