@@ -1,5 +1,5 @@
 #!/usr/bin/make
-.PHONY: all deploy prepare app connect clean status logs help validate inventory wireguard
+.PHONY: all deploy prepare app connect clean status logs help validate inventory wireguard ping
 
 # Default target - complete deployment
 all: deploy
@@ -218,6 +218,12 @@ clean-all:
 		echo "❌ Cleanup cancelled"; \
 	fi
 
+# Test connectivity to deployed VM
+ping:
+	@echo "🔗 Testing connectivity to MMC VM..."
+	@chmod +x scripts/ping.sh
+	@./scripts/ping.sh
+
 # Set up wireguard connection
 wireguard:
 	@echo "🔗 Setting up WireGuard connection..."
@@ -239,6 +245,7 @@ help:
 	@echo "  make validate     - Validate deployment"
 	@echo "  make connect      - SSH into deployed VM"
 	@echo "  make status       - Check deployment status"
+	@echo "  make ping         - Test connectivity to deployed VM"
 	@echo "  make logs         - Show ansible logs"
 	@echo "  make clean        - Clean deployment artifacts (keeps VM)"
 	@echo "  make clean-all    - Clean everything including VM"
@@ -253,6 +260,7 @@ help:
 	@echo "  make deploy              # Complete deployment (Terraform/OpenTofu + Ansible)"
 	@echo "  make vm                  # Deploy VM with OpenTofu (auto-fallback to Terraform)"
 	@echo "  make vm && make prepare  # Step-by-step deployment"
+	@echo "  make ping                # Test connectivity to deployed VM"
 	@echo "  make status              # Check if everything is running"
 	@echo "  make connect             # SSH into VM"
 	@echo ""

@@ -152,6 +152,7 @@ make validate     # Validate the deployment
 
 # Access your deployment
 make connect      # SSH into the deployed VM
+make ping         # Test connectivity to deployed VM
 make status       # Check deployment status
 ```
 
@@ -164,6 +165,7 @@ make status       # Check deployment status
 **Management Commands**:
 ```bash
 make status       # Check deployment status and services
+make ping         # Test connectivity to deployed VM
 make connect      # SSH into deployed VM
 make logs         # View ansible deployment logs
 make clean        # Clean deployment artifacts (keeps VM)
