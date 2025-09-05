@@ -16,6 +16,21 @@ vm:
 	@chmod +x scripts/tfcmd-deploy.sh
 	@./scripts/tfcmd-deploy.sh
 
+# Deploy VM using OpenTofu (alternative to tfcmd)
+vm-tofu:
+	@echo "🚀 Deploying VM using OpenTofu..."
+	@if [ ! -f "infrastructure/credentials.auto.tfvars" ]; then \
+		echo "❌ credentials.auto.tfvars not found!"; \
+		echo "   Copy infrastructure/credentials.auto.tfvars.example to infrastructure/credentials.auto.tfvars"; \
+		echo "   and configure your settings."; \
+		exit 1; \
+	fi
+	@cd infrastructure && tofu init
+	@cd infrastructure && tofu apply -auto-approve
+	@echo "✅ OpenTofu deployment completed"
+	@echo "   Use 'make connect' to SSH into the VM"
+	@echo "   Use 'make prepare' to run ansible preparation"
+
 # Prepare VM (ansible preparation roles)
 prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
@@ -119,11 +134,15 @@ clean-all:
 		if [ -f "scripts/tfcmd-cancel.sh" ]; then \
 			chmod +x scripts/tfcmd-cancel.sh; \
 			./scripts/tfcmd-cancel.sh || echo "⚠️  VM destruction may have failed"; \
+		elif [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ]; then \
+			echo "   Trying OpenTofu cleanup..."; \
+			cd infrastructure && tofu destroy -auto-approve || echo "⚠️  OpenTofu cleanup may have failed"; \
 		else \
-			echo "⚠️  tfcmd-cancel.sh not found, skipping VM destruction"; \
+			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
 		rm -f ansible.log; \
 		rm -f inventory/hosts.ini.backup; \
+		rm -f wg-mmc.conf; \
 		echo "✅ Full cleanup completed"; \
 	else \
 		echo "❌ Cleanup cancelled"; \
@@ -137,8 +156,9 @@ help:
 	@echo "Targets:"
 	@echo "  make              - Run complete deployment (VM + preparation + app)"
 	@echo "  make all          - Same as 'make'"
-	@echo "  make deploy       - Complete deployment (VM + ansible)"
+	@echo "  make deploy       - Complete deployment (tfcmd + ansible)"
 	@echo "  make vm           - Deploy VM only using tfcmd"
+	@echo "  make vm-tofu      - Deploy VM only using OpenTofu"
 	@echo "  make prepare      - Run ansible preparation roles only"
 	@echo "  make app          - Deploy MMC application only"
 	@echo "  make validate     - Validate deployment"
@@ -155,9 +175,15 @@ help:
 	@echo "  - SSH key pair exists (~/.ssh/id_ed25519)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make deploy              # Complete deployment"
+	@echo "  make deploy              # Complete deployment (tfcmd)"
+	@echo "  make vm-tofu             # Deploy VM with OpenTofu"
 	@echo "  make vm && make prepare  # Step-by-step deployment"
 	@echo "  make status              # Check if everything is running"
 	@echo "  make connect             # SSH into VM"
 	@echo ""
+	@echo "Deployment Methods:"
+	@echo "  tfcmd:     Simple CLI tool (default)"
+	@echo "  tofu:      Infrastructure as Code (alternative)"
+	@echo ""
 	@echo "For detailed documentation: docs/ops/ansible-deployment.md"
+

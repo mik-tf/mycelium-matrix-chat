@@ -17,7 +17,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 
 # VM Deployment Parameters (can be overridden)
 VM_NAME="${VM_NAME:-myceliumchat}"
-SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519.pub}"
+SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
 CPU_CORES="${CPU_CORES:-4}"
 MEMORY_GB="${MEMORY_GB:-16}"
 DISK_GB="${DISK_GB:-250}"
@@ -67,8 +67,12 @@ check_prerequisites() {
         die "ansible is not installed or not in PATH"
     fi
 
+    if [ ! -f "${SSH_KEY_PATH}.pub" ]; then
+        die "SSH public key not found: ${SSH_KEY_PATH}.pub"
+    fi
+
     if [ ! -f "$SSH_KEY_PATH" ]; then
-        die "SSH key not found: $SSH_KEY_PATH"
+        die "SSH private key not found: $SSH_KEY_PATH"
     fi
 
     success "Prerequisites check passed"
@@ -210,7 +214,7 @@ main() {
                 echo "Options:"
                 echo "  -h, --help              Show this help"
                 echo "  -n, --name NAME         VM name (default: myceliumchat)"
-                echo "  -s, --ssh-key PATH      SSH key path (default: ~/.ssh/id_ed25519.pub)"
+                echo "  -s, --ssh-key PATH      SSH private key path (default: ~/.ssh/id_ed25519)"
                 echo "  -c, --cpu CORES         CPU cores (default: 4)"
                 echo "  -m, --memory GB         Memory in GB (default: 16)"
                 echo "  -d, --disk GB           Disk size in GB (default: 250)"

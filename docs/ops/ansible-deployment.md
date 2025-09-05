@@ -65,12 +65,30 @@ mycelium-matrix-chat/
 
 Options:
   -n, --name NAME         VM name (default: myceliumchat)
-  -s, --ssh-key PATH      SSH key path (default: ~/.ssh/id_ed25519.pub)
+  -s, --ssh-key PATH      SSH private key path (default: ~/.ssh/id_ed25519)
   -c, --cpu CORES         CPU cores (default: 4)
   -m, --memory GB         Memory in GB (default: 16)
   -d, --disk GB           Disk size in GB (default: 250)
   --node NODE_ID          Node ID (default: 6883)
   --no-mycelium           Disable mycelium networking
+```
+
+### Alternative: OpenTofu Deployment
+
+For Infrastructure as Code approach:
+
+```bash
+# Setup credentials
+cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.auto.tfvars
+# Edit credentials.auto.tfvars with your mnemonic and settings
+
+# Deploy VM with OpenTofu
+make vm-tofu
+
+# Continue with ansible preparation
+make prepare
+make app
+make validate
 ```
 
 ## Deployment Process
