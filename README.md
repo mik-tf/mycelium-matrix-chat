@@ -291,23 +291,47 @@ MMC implements enterprise-grade security practices following the same approach a
 - **Access Controls**: Granular permissions and sudo configuration
 - **Audit Logging**: Comprehensive deployment and service logs
 
-### Key Security Commands
+### Industry-Standard Secure Credential Management
+
+MMC supports multiple secure credential storage methods with automatic priority detection:
+
+#### Method 1: Environment Variables (CI/CD, Automation)
 ```bash
-# Secure credential setup (Bash)
+# Bash/Zsh
 set +o history
-export TF_VAR_mnemonic="your_secure_mnemonic_here"  # Maps to var.mnemonic in Terraform
+export TF_VAR_mnemonic="your_secure_mnemonic_here"
 set -o history
 
-# Secure credential setup (Fish)
+# Fish Shell
 set -l fish_history ""
-set -x TF_VAR_mnemonic "your_secure_mnemonic_here"  # Maps to var.mnemonic in Terraform
+set -x TF_VAR_mnemonic "your_secure_mnemonic_here"
+```
 
-# Deploy with security validation
-make deploy    # Includes security hardening
-make validate  # Verifies security configuration
+#### Method 2: Secure Config Files (Development)
+```bash
+# Automated secure setup
+./infrastructure/.secure/setup-config-file.sh
 
-# Check security status
-make status    # Shows service and security status
+# Or manual setup
+mkdir -p ~/.config/threefold
+echo "your_mnemonic_here" > ~/.config/threefold/mnemonic
+chmod 600 ~/.config/threefold/mnemonic
+```
+
+#### Priority Order:
+1. **TF_VAR_mnemonic** environment variable (highest priority)
+2. **~/.config/threefold/mnemonic** config file
+3. **~/.threefold/mnemonic** alternative location
+4. Interactive prompt (fallback)
+
+#### Deployment Commands:
+```bash
+make deploy    # Complete deployment with automatic credential detection
+make vm-tofu   # VM deployment only
+make prepare   # Ansible preparation
+make app       # MMC application deployment
+make validate  # Security and health validation
+make status    # Check deployment status
 ```
 
 **✅ Variable Mapping**: `TF_VAR_mnemonic` → `var.mnemonic` → OpenTofu/Terraform provider

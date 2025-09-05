@@ -76,6 +76,7 @@ infrastructure/.terraform.lock.hcl
 infrastructure/terraform.tfstate
 infrastructure/terraform.tfstate.backup
 infrastructure/*.tfstate.*
+state.json
 
 # Ansible temporary files
 inventory/hosts.ini.backup

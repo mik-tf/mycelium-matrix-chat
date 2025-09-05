@@ -25,15 +25,35 @@ vm-tofu:
 		echo "   and configure your settings."; \
 		exit 1; \
 	fi
-	@echo "   Checking environment variables..."
-	@if [ -z "$$TF_VAR_mnemonic" ]; then \
-		echo "❌ TF_VAR_mnemonic environment variable not set!"; \
-		echo "   Set it securely using:"; \
-		echo "   Bash/Zsh: export TF_VAR_mnemonic='your_mnemonic_here'"; \
-		echo "   Fish:     set -x TF_VAR_mnemonic 'your_mnemonic_here'"; \
+	@echo "   Checking for ThreeFold mnemonic..."
+	@if [ -n "$$TF_VAR_mnemonic" ]; then \
+		echo "   ✅ Using TF_VAR_mnemonic environment variable"; \
+	elif [ -f "$$HOME/.config/threefold/mnemonic" ]; then \
+		echo "   ✅ Using mnemonic from $$HOME/.config/threefold/mnemonic"; \
+		export TF_VAR_mnemonic=$$(cat "$$HOME/.config/threefold/mnemonic" | tr -d '\n'); \
+	elif [ -f "$$HOME/.threefold/mnemonic" ]; then \
+		echo "   ✅ Using mnemonic from $$HOME/.threefold/mnemonic"; \
+		export TF_VAR_mnemonic=$$(cat "$$HOME/.threefold/mnemonic" | tr -d '\n'); \
+	else \
+		echo "❌ ThreeFold mnemonic not found!"; \
+		echo "   Please set it using one of these methods:"; \
+		echo "   "; \
+		echo "   1. Environment variable:"; \
+		echo "      Bash/Zsh: export TF_VAR_mnemonic='your_mnemonic_here'"; \
+		echo "      Fish:     set -x TF_VAR_mnemonic 'your_mnemonic_here'"; \
+		echo "   "; \
+		echo "   2. Config file (recommended for development):"; \
+		echo "      mkdir -p ~/.config/threefold"; \
+		echo "      echo 'your_mnemonic_here' > ~/.config/threefold/mnemonic"; \
+		echo "      chmod 600 ~/.config/threefold/mnemonic"; \
+		echo "   "; \
+		echo "   3. Alternative location:"; \
+		echo "      mkdir -p ~/.threefold"; \
+		echo "      echo 'your_mnemonic_here' > ~/.threefold/mnemonic"; \
+		echo "      chmod 600 ~/.threefold/mnemonic"; \
 		exit 1; \
 	fi
-	@echo "   ✅ TF_VAR_mnemonic is set"
+	@echo "   ✅ ThreeFold mnemonic configured securely"
 	@echo "   Cleaning up any existing lock files..."
 	@cd infrastructure && rm -f .terraform.lock.hcl
 	@cd infrastructure && rm -rf .terraform

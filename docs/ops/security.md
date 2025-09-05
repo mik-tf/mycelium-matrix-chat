@@ -6,11 +6,18 @@ This document outlines security best practices for the Mycelium-Matrix Chat (MMC
 
 The ThreeFold Grid deployment requires a mnemonic phrase for authentication, which is a highly sensitive credential that should be protected.
 
-### Secure Method for Setting Credentials
+### Industry-Standard Secure Credential Management
 
-We recommend using environment variables with shell history protection. The variable name `TF_VAR_mnemonic` corresponds to the `mnemonic` variable defined in `infrastructure/variables.tf` and used in `infrastructure/main.tf`.
+MMC implements multiple secure credential storage methods following industry best practices. The system checks for credentials in order of security preference:
 
-#### Bash/Zsh
+#### Priority Order:
+1. **Environment Variables** (highest security - CI/CD, automation)
+2. **Local Config Files** (development convenience)
+3. **Interactive Prompts** (fallback - least secure)
+
+#### Method 1: Environment Variables (Recommended for CI/CD)
+
+**Bash/Zsh:**
 ```bash
 # This prevents your mnemonic from being stored in shell history
 set +o history
@@ -18,12 +25,45 @@ export TF_VAR_mnemonic="your_mnemonic_phrase"
 set -o history
 ```
 
-#### Fish Shell
+**Fish Shell:**
 ```fish
 # Disable history recording for this session
 set -l fish_history ""
 # Export variable so subprocesses (like OpenTofu) can see it
 set -x TF_VAR_mnemonic "your_mnemonic_phrase"
+```
+
+#### Method 2: Secure Config Files (Recommended for Development)
+
+**Automated Setup:**
+```bash
+# Run the secure setup script
+./infrastructure/.secure/setup-config-file.sh
+```
+
+**Manual Setup:**
+```bash
+# Create secure config directory
+mkdir -p ~/.config/threefold
+
+# Save your mnemonic securely
+echo "your_mnemonic_phrase" > ~/.config/threefold/mnemonic
+chmod 600 ~/.config/threefold/mnemonic
+
+# Alternative location
+mkdir -p ~/.threefold
+echo "your_mnemonic_phrase" > ~/.threefold/mnemonic
+chmod 600 ~/.threefold/mnemonic
+```
+
+#### Method 3: Encrypted Files (Enterprise)
+
+```bash
+# Using GPG encryption
+echo "your_mnemonic_phrase" | gpg --encrypt --recipient your-email@example.com > ~/.config/threefold/mnemonic.gpg
+
+# Decrypt when needed
+gpg --decrypt ~/.config/threefold/mnemonic.gpg
 ```
 
 **✅ Variable Mapping Confirmed**: `TF_VAR_mnemonic` → `var.mnemonic` → OpenTofu/Terraform provider
