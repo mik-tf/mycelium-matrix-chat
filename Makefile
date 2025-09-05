@@ -16,33 +16,35 @@ vm:
 	@chmod +x scripts/tfcmd-deploy.sh
 	@./scripts/tfcmd-deploy.sh
 
-# Deploy VM using OpenTofu (alternative to tfcmd)
+# Deploy VM using OpenTofu/Terraform (alternative to tfcmd)
 vm-tofu:
-	@echo "🚀 Deploying VM using OpenTofu..."
+	@echo "🚀 Deploying VM using OpenTofu/Terraform..."
 	@if [ ! -f "infrastructure/credentials.auto.tfvars" ]; then \
 		echo "❌ credentials.auto.tfvars not found!"; \
 		echo "   Copy infrastructure/credentials.auto.tfvars.example to infrastructure/credentials.auto.tfvars"; \
 		echo "   and configure your settings."; \
 		exit 1; \
 	fi
-	@echo "   Checking for lock file conflicts..."
-	@if [ -f "infrastructure/.terraform.lock.hcl" ]; then \
-		echo "   ⚠️  Found Terraform lock file, removing to avoid conflicts..."; \
-		rm -f infrastructure/.terraform.lock.hcl; \
+	@echo "   Checking environment variables..."
+	@if [ -z "$$TF_VAR_mnemonic" ]; then \
+		echo "❌ TF_VAR_mnemonic environment variable not set!"; \
+		echo "   Set it securely using:"; \
+		echo "   Bash/Zsh: export TF_VAR_mnemonic='your_mnemonic_here'"; \
+		echo "   Fish:     set -x TF_VAR_mnemonic 'your_mnemonic_here'"; \
+		exit 1; \
 	fi
-	@echo "   Initializing OpenTofu..."
-	@if ! cd infrastructure && tofu init 2>/dev/null; then \
-		echo "⚠️  OpenTofu provider not available. Falling back to Terraform..."; \
-		if command -v terraform &>/dev/null; then \
-			echo "   Using Terraform instead..."; \
-			cd infrastructure && terraform init; \
-		else \
-			echo "❌ Neither OpenTofu nor Terraform found. Please install one of them."; \
-			exit 1; \
-		fi; \
-	fi
+	@echo "   ✅ TF_VAR_mnemonic is set"
+	@echo "   Cleaning up any existing lock files..."
+	@cd infrastructure && rm -f .terraform.lock.hcl
+	@cd infrastructure && rm -rf .terraform
+	@echo "   Initializing Terraform/OpenTofu..."
+	@cd infrastructure && terraform init
+	@echo "   Validating configuration..."
+	@cd infrastructure && terraform validate
+	@echo "   Planning deployment..."
+	@cd infrastructure && terraform plan -out=tfplan
 	@echo "   Applying infrastructure..."
-	@cd infrastructure && (tofu apply -auto-approve 2>/dev/null || terraform apply -auto-approve)
+	@cd infrastructure && terraform apply tfplan
 	@echo "✅ Infrastructure deployment completed"
 	@echo "   Use 'make connect' to SSH into the VM"
 	@echo "   Use 'make prepare' to run ansible preparation"

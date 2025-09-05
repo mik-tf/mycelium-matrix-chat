@@ -13,12 +13,12 @@ terraform {
 
 # Configure the provider
 provider "grid" {
-  mnemonics = var.mnemonic
+  mnemonic = var.mnemonic
   network   = var.network
 }
 
 # SSH key for VM access
-resource "grid_ssh_key" "mmc_key" {
+resource "grid_sshkey" "mmc_key" {
   name   = var.vm_name
   ssh_key = file(var.ssh_public_key_path)
 }
@@ -27,18 +27,21 @@ resource "grid_ssh_key" "mmc_key" {
 resource "grid_deployment" "mmc_vm" {
   node         = var.node_id
   network_name = grid_network.mmc_network.name
-  vms = [{
-    name       = var.vm_name
-    flist      = var.flist
-    entrypoint = var.entrypoint
-    publicip   = false
-    mycelium_ip = var.enable_mycelium
-    cpu        = var.cpu_cores
-    memory     = var.memory_gb * 1024  # Convert GB to MB
-    rootfs_size = var.disk_gb * 1024   # Convert GB to MB
-    ssh_keys   = [grid_ssh_key.mmc_key.name]
-    env_vars   = {}
-  }]
+
+  vms {
+    name             = var.vm_name
+    flist            = var.flist
+    entrypoint       = var.entrypoint
+    publicip         = false
+    mycelium_ip_seed = var.enable_mycelium
+    cpu              = var.cpu_cores
+    memory           = var.memory_gb * 1024  # Convert GB to MB
+    rootfs_size      = var.disk_gb * 1024    # Convert GB to MB
+
+    env_vars = {
+      SSH_KEY = fileexists(var.ssh_public_key_path) ? file(var.ssh_public_key_path) : ""
+    }
+  }
 }
 
 # Network for MMC VM
