@@ -18,7 +18,11 @@ provider "grid" {
   relay_url = "wss://relay.grid.tf"
 }
 
-# Generate mycelium IP seed
+# Generate mycelium keys and IP seed
+resource "random_bytes" "mycelium_key" {
+  length = 32
+}
+
 resource "random_bytes" "mycelium_ip_seed" {
   length = 6
 }
@@ -50,11 +54,14 @@ resource "grid_deployment" "mmc_vm" {
 
 # Network for MMC VM
 resource "grid_network" "mmc_network" {
-  nodes       = [var.node_id]
-  ip_range    = var.network_ip_range
-  name        = "${var.vm_name}_network"
-  description = "Network for MMC deployment"
+  nodes         = [var.node_id]
+  ip_range      = var.network_ip_range
+  name          = "${var.vm_name}_network"
+  description   = "Network for MMC deployment"
   add_wg_access = true
+  mycelium_keys = {
+    (var.node_id) = random_bytes.mycelium_key.hex
+  }
 }
 
 # Generate Ansible inventory
