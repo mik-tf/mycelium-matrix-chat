@@ -168,13 +168,13 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 ansible_python_interpreter=/usr/bin/python3" > platform/inventory/hosts.ini
 
 # Run preparation
-ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation
+ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation
 
 # Run deployment
-ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application
+ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application
 
 # Run validation
-ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate
+ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags validate
 ```
 
 ## Configuration
@@ -230,7 +230,7 @@ The deployment uses your default SSH key. To use a different key:
 Run with verbose output:
 
 ```bash
-ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml -vvv
+ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml -vvv
 ```
 
 ### Manual Recovery
@@ -245,7 +245,7 @@ ssh root@[VM_IP]
 systemctl list-units --type=service | grep mmc
 
 # Re-run specific role
-ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags role_name
+ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags role_name
 ```
 
 ## Security Considerations

@@ -63,7 +63,7 @@ prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vvv; then \
 			echo "✅ Ansible preparation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -80,7 +80,7 @@ app: inventory
 	@echo "🚀 Deploying MMC application..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application -vvv; then \
 			echo "✅ Ansible application deployment completed successfully"; \
 			exit 0; \
 		fi; \
@@ -97,7 +97,7 @@ validate: inventory
 	@echo "🔍 Validating deployment..."
 	@for i in 1 2 3; do \
 		echo "   Attempt $$i of 3..."; \
-		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags validate -vvv; then \
 			echo "✅ Ansible validation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -153,7 +153,7 @@ status: inventory
 		echo "🌐 VM IP: $$VM_IP"; \
 		echo ""; \
 		echo "🔍 Checking services..."; \
-		ansible -c platform/ansible.cfg -i platform/inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
+		ANSIBLE_CONFIG=platform/ansible.cfg ansible -i platform/inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
 		echo ""; \
 		echo "💡 Tip: If services check fails, try again in a few minutes as the VM may still be initializing"; \
 	else \

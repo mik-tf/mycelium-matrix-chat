@@ -177,21 +177,21 @@ run_ansible() {
 
     # Run preparation playbooks
     log "Running preparation playbooks..."
-    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation; then
+    if ! ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation; then
         error "Ansible preparation failed"
         exit 1
     fi
 
     # Run deployment playbook
     log "Running deployment playbook..."
-    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application; then
+    if ! ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application; then
         error "Ansible deployment failed"
         exit 1
     fi
 
     # Run validation
     log "Running validation..."
-    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate,post-deploy; then
+    if ! ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags validate,post-deploy; then
         warning "Validation had some issues, but deployment may still be functional"
     fi
 

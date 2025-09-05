@@ -597,7 +597,7 @@ tfcmd balance
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_ed25519 root@VM_IP
 
 # Check ansible connectivity
-ansible -c platform/ansible.cfg -i platform/inventory/hosts.ini mmc_servers -m ping
+ANSIBLE_CONFIG=platform/ansible.cfg ansible -i platform/inventory/hosts.ini mmc_servers -m ping
 
 # View ansible logs
 make logs
@@ -625,7 +625,7 @@ ssh root@[VM_IP] "systemctl restart mmc-web-gateway mmc-matrix-bridge mmc-fronte
 **Ansible Role Failed**
 - Check ansible logs: `make logs`
 - Verify internet connectivity on VM
-- Run roles individually: `ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags role_name`
+- Run roles individually: `ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags role_name`
 
 **Services Not Starting**
 - Check service status: `make status`
