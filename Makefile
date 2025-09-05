@@ -11,13 +11,13 @@ deploy:
 	@./deploy-tfcmd-ansible.sh
 
 # Deploy VM only (tfcmd)
-vm:
+vm-tfcmd:
 	@echo "🚀 Deploying VM using tfcmd..."
 	@chmod +x scripts/tfcmd-deploy.sh
 	@./scripts/tfcmd-deploy.sh
 
 # Deploy VM using OpenTofu/Terraform (alternative to tfcmd)
-vm-tofu:
+vm:
 	@echo "🚀 Deploying VM using OpenTofu/Terraform..."
 	@if [ ! -f "infrastructure/credentials.auto.tfvars" ]; then \
 		echo "❌ credentials.auto.tfvars not found!"; \
