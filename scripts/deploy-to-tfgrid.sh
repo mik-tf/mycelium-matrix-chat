@@ -80,7 +80,7 @@ check_ssh_connectivity() {
     log "Testing SSH connectivity to $user@$ip..."
 
     # Test SSH connection
-    if ! ssh -i "$key" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$user@$ip" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! ssh -i "$key" -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$user@$ip" "echo 'SSH connection successful'" 2>/dev/null; then
         die "Cannot connect to $user@$ip via SSH. Please ensure:
         1. SSH key is properly configured
         2. Mycelium network is connected on your local machine

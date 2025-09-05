@@ -592,7 +592,7 @@ tfcmd balance
 #### Ansible Connection Issues
 ```bash
 # Test SSH connection manually
-ssh -i ~/.ssh/id_ed25519 root@[VM_IP]
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_ed25519 root@VM_IP
 
 # Check ansible connectivity
 ansible -i inventory/hosts.ini mmc_servers -m ping

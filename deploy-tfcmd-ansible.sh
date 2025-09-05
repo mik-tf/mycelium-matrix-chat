@@ -149,7 +149,7 @@ wait_for_vm() {
 
     local elapsed=0
     while [ $elapsed -lt "$timeout" ]; do
-        if ssh -o ConnectTimeout=10 \
+        if ssh -o ConnectTimeout=30 \
                -o StrictHostKeyChecking=no \
                -o UserKnownHostsFile=/dev/null \
                -o LogLevel=ERROR \

@@ -294,13 +294,13 @@ wait_for_vm_ready() {
 
         # Simple approach: use basic SSH connection test without complex variable expansion
         log "Testing SSH connectivity (simplified approach)..."
-        
+
         # Export variables for sub-shell
         export TEST_IP="$ip"
         export TEST_SSH_KEY="$ssh_key_path"
-        
+
         # Use direct SSH connection test with proper IPv6 bracketing
-        if ssh -o ConnectTimeout=10 \
+        if ssh -o ConnectTimeout=30 \
                -o StrictHostKeyChecking=no \
                -o UserKnownHostsFile=/dev/null \
                -o LogLevel=ERROR \
@@ -315,13 +315,13 @@ wait_for_vm_ready() {
             
             # Try alternative connection test with more verbose output
             debug "Attempting connection test with debug output..."
-            ssh_debug_output=$(ssh -o ConnectTimeout=5 \
-                                  -o StrictHostKeyChecking=no \
-                                  -o UserKnownHostsFile=/dev/null \
-                                  -o LogLevel=DEBUG1 \
-                                  -i "$ssh_key_path" \
-                                  "$ssh_target" \
-                                  "echo 'test'" 2>&1 || echo "Connection failed")
+            ssh_debug_output=$(ssh -o ConnectTimeout=30 \
+                                   -o StrictHostKeyChecking=no \
+                                   -o UserKnownHostsFile=/dev/null \
+                                   -o LogLevel=DEBUG1 \
+                                   -i "$ssh_key_path" \
+                                   "$ssh_target" \
+                                   "echo 'test'" 2>&1 || echo "Connection failed")
             debug "SSH test result: $ssh_debug_output"
         fi
 
@@ -359,7 +359,7 @@ execute_remote() {
 
     # Use consistent SSH options with improved IPv6 compatibility
     if ! ssh -i "$ssh_key_path" \
-              -o ConnectTimeout=10 \
+              -o ConnectTimeout=30 \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -o LogLevel=ERROR \
@@ -396,7 +396,7 @@ copy_to_remote() {
 
     # Use SSH with base64 encoding for better IPv6 compatibility and add error handling
     if ! cat "$local_file" | base64 | ssh -i "$ssh_key_path" \
-              -o ConnectTimeout=10 \
+              -o ConnectTimeout=30 \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -o LogLevel=ERROR \

@@ -78,7 +78,7 @@ check_ssh_connectivity() {
     log "Testing SSH connectivity to $user@$ip..."
 
     # Test SSH connection with timeout (TFGrid provides SSH keys automatically)
-    if ! timeout 30 ssh -i "$key" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! timeout 30 ssh -i "$key" -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "echo 'SSH connection successful'" 2>/dev/null; then
         die "Cannot connect to $user@$ip via SSH.
 
 Troubleshooting for TFGrid VMs:
@@ -103,7 +103,7 @@ check_vm_requirements() {
 
     # Check if running Ubuntu
     local os_info
-    os_info=$(timeout 30 ssh -i "$key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "cat /etc/os-release | grep -i ubuntu || echo 'Not Ubuntu'" 2>/dev/null)
+    os_info=$(ssh -i "$key" -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "cat /etc/os-release | grep -i ubuntu || echo 'Not Ubuntu'" 2>/dev/null)
 
     if [[ "$os_info" == *"Not Ubuntu"* ]]; then
         die "VM is not running Ubuntu. This script requires Ubuntu 20.04 or higher."
@@ -111,7 +111,7 @@ check_vm_requirements() {
 
     # Check Ubuntu version
     local ubuntu_version
-    ubuntu_version=$(timeout 30 ssh -i "$key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "lsb_release -r | cut -f2 | cut -d'.' -f1" 2>/dev/null)
+    ubuntu_version=$(ssh -i "$key" -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@$ip" "lsb_release -r | cut -f2 | cut -d'.' -f1" 2>/dev/null)
 
     if [ "$ubuntu_version" -lt 20 ]; then
         die "Ubuntu $ubuntu_version detected. Ubuntu 20.04 or higher required."
