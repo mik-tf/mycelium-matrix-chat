@@ -25,9 +25,20 @@ vm-tofu:
 		echo "   and configure your settings."; \
 		exit 1; \
 	fi
-	@cd infrastructure && tofu init
-	@cd infrastructure && tofu apply -auto-approve
-	@echo "✅ OpenTofu deployment completed"
+	@echo "   Initializing OpenTofu..."
+	@if ! cd infrastructure && tofu init 2>/dev/null; then \
+		echo "⚠️  OpenTofu provider not available. Falling back to Terraform..."; \
+		if command -v terraform &>/dev/null; then \
+			echo "   Using Terraform instead..."; \
+			cd infrastructure && terraform init; \
+		else \
+			echo "❌ Neither OpenTofu nor Terraform found. Please install one of them."; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "   Applying infrastructure..."
+	@cd infrastructure && (tofu apply -auto-approve 2>/dev/null || terraform apply -auto-approve)
+	@echo "✅ Infrastructure deployment completed"
 	@echo "   Use 'make connect' to SSH into the VM"
 	@echo "   Use 'make prepare' to run ansible preparation"
 
@@ -135,8 +146,8 @@ clean-all:
 			chmod +x scripts/tfcmd-cancel.sh; \
 			./scripts/tfcmd-cancel.sh || echo "⚠️  VM destruction may have failed"; \
 		elif [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ]; then \
-			echo "   Trying OpenTofu cleanup..."; \
-			cd infrastructure && tofu destroy -auto-approve || echo "⚠️  OpenTofu cleanup may have failed"; \
+			echo "   Trying infrastructure cleanup..."; \
+			cd infrastructure && (tofu destroy -auto-approve 2>/dev/null || terraform destroy -auto-approve 2>/dev/null) || echo "⚠️  Infrastructure cleanup may have failed"; \
 		else \
 			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
@@ -158,7 +169,7 @@ help:
 	@echo "  make all          - Same as 'make'"
 	@echo "  make deploy       - Complete deployment (tfcmd + ansible)"
 	@echo "  make vm           - Deploy VM only using tfcmd"
-	@echo "  make vm-tofu      - Deploy VM only using OpenTofu"
+	@echo "  make vm-tofu      - Deploy VM only using OpenTofu (falls back to Terraform)"
 	@echo "  make prepare      - Run ansible preparation roles only"
 	@echo "  make app          - Deploy MMC application only"
 	@echo "  make validate     - Validate deployment"
@@ -176,7 +187,7 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  make deploy              # Complete deployment (tfcmd)"
-	@echo "  make vm-tofu             # Deploy VM with OpenTofu"
+	@echo "  make vm-tofu             # Deploy VM with OpenTofu (auto-fallback to Terraform)"
 	@echo "  make vm && make prepare  # Step-by-step deployment"
 	@echo "  make status              # Check if everything is running"
 	@echo "  make connect             # SSH into VM"

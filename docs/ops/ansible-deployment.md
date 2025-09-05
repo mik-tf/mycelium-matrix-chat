@@ -73,7 +73,7 @@ Options:
   --no-mycelium           Disable mycelium networking
 ```
 
-### Alternative: OpenTofu Deployment
+### Alternative: OpenTofu/Terraform Deployment
 
 For Infrastructure as Code approach:
 
@@ -82,7 +82,7 @@ For Infrastructure as Code approach:
 cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.auto.tfvars
 # Edit credentials.auto.tfvars with your mnemonic and settings
 
-# Deploy VM with OpenTofu
+# Deploy VM with OpenTofu (auto-fallback to Terraform if needed)
 make vm-tofu
 
 # Continue with ansible preparation
@@ -90,6 +90,8 @@ make prepare
 make app
 make validate
 ```
+
+**Note**: The `vm-tofu` command will automatically fall back to Terraform if the OpenTofu provider is not available, ensuring deployment works regardless of which tool you have installed.
 
 ## Deployment Process
 

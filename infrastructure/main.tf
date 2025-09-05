@@ -2,13 +2,14 @@ terraform {
   required_providers {
     grid = {
       source  = "threefoldtech/grid"
-      version = "2.0.0"
+      version = "~> 1.0"
     }
   }
 }
 
 # OpenTofu Configuration
 # This configuration works with both Terraform and OpenTofu
+# Note: If provider is not available, you may need to use Terraform instead
 
 # Configure the provider
 provider "grid" {
