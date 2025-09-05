@@ -5,16 +5,16 @@ This document describes the new ansible-based deployment system for Mycelium-Mat
 ## Overview
 
 The new deployment system combines:
-- **tfcmd** for VM deployment on TFGrid
+- **OpenTofu/Terraform** for VM deployment on TFGrid
 - **Ansible** for configuration management and application deployment
 - **Modular roles** for different components (inspired by tfgrid-k3s)
 
 ## Architecture
 
 ```
-tfcmd deploy → VM ready → Ansible inventory → Ansible playbooks → MMC deployed
+OpenTofu/Terraform deploy → VM ready → Ansible inventory → Ansible playbooks → MMC deployed
      ↓              ↓              ↓              ↓              ↓
-  Deploy VM     Extract IP    Generate hosts   Run roles     Validate
+Deploy VM     Extract IP    Generate hosts   Run roles     Validate
 ```
 
 ## Directory Structure
@@ -44,7 +44,7 @@ mycelium-matrix-chat/
 
 ### Prerequisites
 
-1. **tfcmd** installed and configured
+1. **OpenTofu** or **Terraform** installed
 2. **Ansible** installed (`pip install ansible`)
 3. **SSH key pair** exists
 4. **Mycelium network** connected (recommended)
@@ -54,25 +54,30 @@ mycelium-matrix-chat/
 
 ```bash
 # Use default settings
-./deploy-tfcmd-ansible.sh
+make deploy
 
-# Or customize deployment
-./deploy-tfcmd-ansible.sh --cpu 2 --memory 8 --disk 100 --name my-mmc
+# Or deploy step-by-step
+make vm           # Deploy VM using OpenTofu/Terraform
+make prepare      # Prepare VM with Ansible
+make app          # Deploy MMC application
+make validate     # Validate deployment
 ```
 
 ### Available Options
 
-```bash
-./deploy-tfcmd-ansible.sh --help
+Use environment variables or the `infrastructure/credentials.auto.tfvars` file to customize:
 
-Options:
-  -n, --name NAME         VM name (default: myceliumchat)
-  -s, --ssh-key PATH      SSH private key path (default: ~/.ssh/id_ed25519)
-  -c, --cpu CORES         CPU cores (default: 4)
-  -m, --memory GB         Memory in GB (default: 16)
-  -d, --disk GB           Disk size in GB (default: 250)
-  --node NODE_ID          Node ID (default: 6883)
-  --no-mycelium           Disable mycelium networking
+```bash
+# VM Configuration (via infrastructure/credentials.auto.tfvars)
+vm_name = "myceliumchat"
+cpu_cores = 4
+memory_gb = 16
+disk_gb = 250
+node_id = 6883
+
+# Or use environment variables
+export TF_VAR_cpu_cores=2
+export TF_VAR_memory_gb=8
 ```
 
 ### Alternative: OpenTofu/Terraform Deployment
@@ -97,7 +102,7 @@ make validate
 
 ## Deployment Process
 
-### 1. VM Deployment (tfcmd)
+### 1. VM Deployment (OpenTofu/Terraform)
 - Deploys Ubuntu 24.04 VM on TFGrid
 - Extracts mycelium IPv6 address
 - Configures VM with specified resources
@@ -200,10 +205,11 @@ mmc_branch: "main"
 
 ### SSH Keys
 
-The deployment uses your default SSH key. To use a different key:
+The deployment uses your default SSH key (`~/.ssh/id_ed25519` or `~/.ssh/id_rsa`). To use a different key, modify the `infrastructure/credentials.auto.tfvars` file:
 
-```bash
-./deploy-tfcmd-ansible.sh --ssh-key /path/to/your/key
+```hcl
+ssh_private_key_path = "/path/to/your/private/key"
+ssh_public_key_path = "/path/to/your/public/key.pub"
 ```
 
 ## Troubleshooting

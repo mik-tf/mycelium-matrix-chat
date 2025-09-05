@@ -5,16 +5,10 @@
 all: deploy
 
 # Complete deployment (VM + preparation + application)
-deploy:
-	@echo "🚀 Starting complete MMC deployment..."
-	@chmod +x deploy-tfcmd-ansible.sh
-	@./deploy-tfcmd-ansible.sh
-
-# Deploy VM only (tfcmd)
-vm-tfcmd:
-	@echo "🚀 Deploying VM using tfcmd..."
-	@chmod +x scripts/tfcmd-deploy.sh
-	@./scripts/tfcmd-deploy.sh
+deploy: vm prepare app
+	@echo "🚀 Complete MMC deployment finished!"
+	@echo "   Use 'make connect' to SSH into the VM"
+	@echo "   Use 'make status' to check deployment status"
 
 # Deploy VM using OpenTofu/Terraform (alternative to tfcmd)
 vm:
@@ -207,31 +201,18 @@ clean-all:
 			echo "⚠️  ThreeFold mnemonic not found for terraform destroy. Skipping infrastructure cleanup."; \
 			MNEMONIC_VALUE=""; \
 		fi; \
-		if [ -f "scripts/tfcmd-cancel.sh" ]; then \
-			chmod +x scripts/tfcmd-cancel.sh; \
-			./scripts/tfcmd-cancel.sh || echo "⚠️  tfcmd VM destruction may have failed"; \
-		fi; \
 		if [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ] && [ -n "$$MNEMONIC_VALUE" ]; then \
 		    echo "   Trying infrastructure cleanup..."; \
 		    cd infrastructure && ( TF_VAR_mnemonic="$$MNEMONIC_VALUE" tofu destroy -auto-approve 2>/dev/null || TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform destroy -auto-approve 2>/dev/null ) || echo "⚠️  Infrastructure cleanup may have failed"; \
 		    cd ..; \
 		fi; \
-		if [ ! -f "scripts/tfcmd-cancel.sh" ] && [ ! -d "infrastructure" ]; then \
-			echo "⚠️  No cleanup script found, skipping VM destruction"; \
-		fi; \
 		if [ -d "infrastructure" ]; then \
 			echo "   Cleaning up Terraform files..."; \
 			cd infrastructure && rm -rf .terraform/ .terraform.lock.hcl state.json terraform.tfstate* tfplan .terraform* terraform.tfstate*; \
 		fi; \
-		echo "   Cleaning up WireGuard..."; \
-		if command -v wg-quick >/dev/null 2>&1 && [ -f "/etc/wireguard/mmc.conf" ]; then \
-			sudo wg-quick down mmc 2>/dev/null || echo "⚠️  Failed to bring down WireGuard"; \
-			sudo rm -f /etc/wireguard/mmc.conf; \
-		fi; \
 		rm -rf infrastructure/.terraform/ infrastructure/.terraform.lock.hcl infrastructure/state.json infrastructure/terraform.tfstate* infrastructure/tfplan infrastructure/.terraform* infrastructure/terraform.tfstate* \
 		rm -f ansible.log; \
 		rm -f platform/inventory/hosts.ini.backup; \
-		rm -f wg-mmc.conf; \
 		echo "✅ Full cleanup completed"; \
 	else \
 		echo "❌ Cleanup cancelled"; \
@@ -251,8 +232,7 @@ help:
 	@echo "Targets:"
 	@echo "  make              - Run complete deployment (VM + preparation + app)"
 	@echo "  make all          - Same as 'make'"
-	@echo "  make deploy       - Complete deployment (tfcmd + ansible)"
-	@echo "  make vm-tfcmd     - Deploy VM only using tfcmd"
+	@echo "  make deploy       - Complete deployment (Terraform/OpenTofu + Ansible)"
 	@echo "  make vm           - Deploy VM only using OpenTofu (falls back to Terraform)"
 	@echo "  make prepare      - Run ansible preparation roles only"
 	@echo "  make app          - Deploy MMC application only"
@@ -262,24 +242,23 @@ help:
 	@echo "  make logs         - Show ansible logs"
 	@echo "  make clean        - Clean deployment artifacts (keeps VM)"
 	@echo "  make clean-all    - Clean everything including VM"
-	@echo "  make wireguard    - Set up the WireGuard connection"
 	@echo "  make help         - Show this help"
 	@echo ""
 	@echo "Prerequisites:"
-	@echo "  - tfcmd installed and configured"
+	@echo "  - OpenTofu or Terraform installed"
 	@echo "  - ansible installed"
 	@echo "  - SSH key pair exists (~/.ssh/id_ed25519)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make deploy              # Complete deployment (tfcmd)"
-	@echo "  make vm-tofu             # Deploy VM with OpenTofu (auto-fallback to Terraform)"
+	@echo "  make deploy              # Complete deployment (Terraform/OpenTofu + Ansible)"
+	@echo "  make vm                  # Deploy VM with OpenTofu (auto-fallback to Terraform)"
 	@echo "  make vm && make prepare  # Step-by-step deployment"
 	@echo "  make status              # Check if everything is running"
 	@echo "  make connect             # SSH into VM"
 	@echo ""
 	@echo "Deployment Methods:"
-	@echo "  tfcmd:     Simple CLI tool (default)"
-	@echo "  tofu:      Infrastructure as Code (alternative)"
+	@echo "  OpenTofu:  Infrastructure as Code (recommended)"
+	@echo "  Terraform: Infrastructure as Code (fallback)"
 	@echo ""
 	@echo "For detailed documentation: docs/ops/ansible-deployment.md"
 

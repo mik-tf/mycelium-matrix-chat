@@ -123,7 +123,7 @@ make docs-phase2           # Open Phase 2 deployment guide
 
 **Prerequisites**:
 - Linux/macOS system with bash
-- [tfcmd](https://github.com/threefoldtech/tfcmd) installed and configured
+- [OpenTofu](https://opentofu.org/) or [Terraform](https://www.terraform.io/) installed
 - [Ansible](https://www.ansible.com/) installed
 - ThreeFold account with sufficient TFT balance
 - SSH key pair (auto-detected from `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`)
@@ -139,13 +139,13 @@ cd mycelium-matrix-chat
 make deploy
 
 # Alternative: Use OpenTofu for infrastructure (auto-fallback to Terraform)
-make vm-tofu      # Deploy VM using OpenTofu (falls back to Terraform if needed)
+make vm           # Deploy VM using OpenTofu (falls back to Terraform if needed)
 make prepare      # Prepare VM with ansible (install Docker, Rust, Node.js, etc.)
 make app          # Deploy MMC application components
 make validate     # Validate the deployment
 
-# Or deploy step-by-step with tfcmd:
-make vm           # Deploy Ubuntu 24.04 VM on TFGrid using tfcmd
+# Or deploy step-by-step:
+make vm           # Deploy Ubuntu 24.04 VM on TFGrid using OpenTofu/Terraform
 make prepare      # Prepare VM with ansible (install Docker, Rust, Node.js, etc.)
 make app          # Deploy MMC application components
 make validate     # Validate the deployment
@@ -156,7 +156,7 @@ make status       # Check deployment status
 ```
 
 **Deployment Process**:
-1. **VM Deployment** (`make vm`): Deploys Ubuntu 24.04 VM on TFGrid using tfcmd, extracts mycelium IPv6 address
+1. **VM Deployment** (`make vm`): Deploys Ubuntu 24.04 VM on TFGrid using OpenTofu/Terraform, extracts mycelium IPv6 address
 2. **VM Preparation** (`make prepare`): Ansible installs all prerequisites (Docker, Rust, Node.js, Mycelium, Nginx, security)
 3. **Application Deployment** (`make app`): Deploys MMC components with systemd services
 4. **Validation** (`make validate`): Health checks and service verification
@@ -167,7 +167,7 @@ make status       # Check deployment status and services
 make connect      # SSH into deployed VM
 make logs         # View ansible deployment logs
 make clean        # Clean deployment artifacts (keeps VM)
-make clean-all    # Clean everything including VM destruction (supports both tfcmd and OpenTofu)
+make clean-all    # Clean everything including VM destruction (OpenTofu/Terraform)
 make help         # Show all available commands
 ```
 
@@ -249,7 +249,7 @@ The new ansible-based deployment creates a complete MMC environment on TFGrid:
 ```mermaid
 graph LR
     A[Developer/Local] --> B[make deploy]
-    B --> C[tfcmd deploy VM]
+    B --> C[OpenTofu/Terraform<br/>deploy VM]
     C --> D[Ubuntu 24.04 VM<br/>+ Mycelium IP]
     D --> E[Ansible Inventory<br/>Generation]
     E --> F[Ansible Playbooks]
@@ -264,7 +264,7 @@ graph LR
 ```
 
 **Deployment Components**:
-1. **tfcmd Integration**: Deploys Ubuntu 24.04 VM with Mycelium networking
+1. **OpenTofu/Terraform Integration**: Deploys Ubuntu 24.04 VM with Mycelium networking
 2. **Ansible Automation**: 9 modular roles for complete system setup
 3. **Service Management**: systemd services for all MMC components
 4. **Health Validation**: Automated testing and monitoring
@@ -327,7 +327,7 @@ chmod 600 ~/.config/threefold/mnemonic
 #### Deployment Commands:
 ```bash
 make deploy    # Complete deployment with automatic credential detection
-make vm-tofu   # VM deployment only
+make vm        # VM deployment only
 make prepare   # Ansible preparation
 make app       # MMC application deployment
 make validate  # Security and health validation
@@ -468,8 +468,8 @@ mycelium-matrix-chat/
 - **Reverse Proxy**: Nginx with security headers and rate limiting
 - **Development Tools**: Enhanced Makefile with 15+ deployment commands
 - **Deployment**: Automated script ready for chat.projectmycelium.org (`deploy.sh`)
-- **TFGrid Deployment**: Complete ansible-based deployment system with tfcmd integration
-- **Infrastructure as Code**: OpenTofu/Terraform support with automatic fallback
+- **TFGrid Deployment**: Complete ansible-based deployment system with OpenTofu/Terraform
+- **Infrastructure as Code**: OpenTofu/Terraform with automatic fallback
 - **Configuration Management**: 9 modular ansible roles for automated setup
 - **Service Management**: systemd services with health monitoring and logging
 - **Security**: Enterprise-grade credential handling and access controls
