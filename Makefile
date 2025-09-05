@@ -167,6 +167,10 @@ clean-all:
 		else \
 			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
+		if [ -d "infrastructure" ]; then \
+			echo "   Cleaning up Terraform files..."; \
+			cd infrastructure && rm -rf .terraform/ .terraform.lock.hcl state.json terraform.tfstate* tfplan; \
+		fi; \
 		echo "   Cleaning up WireGuard..."; \
 		if command -v wg-quick >/dev/null 2>&1 && [ -f "/etc/wireguard/mmc.conf" ]; then \
 			sudo wg-quick down mmc 2>/dev/null || echo "⚠️  Failed to bring down WireGuard"; \
