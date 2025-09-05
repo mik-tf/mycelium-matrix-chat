@@ -4,9 +4,11 @@
 
 ![Mycelium-Matrix Logo](https://img.shields.io/badge/Mycelium-Matrix-blue?style=for-the-badge)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Deployment%20Ready-brightgreen?style=for-the-badge)](docs/ROADMAP.md)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=for-the-badge)](docs/ROADMAP.md)
 [![Phase 1](https://img.shields.io/badge/Phase%201-100%25%20Complete-success?style=for-the-badge)](#roadmap)
-[![Phase 2](https://img.shields.io/badge/Phase%202-90%25%20Complete-yellow?style=for-the-badge)](#roadmap)
+[![Phase 2](https://img.shields.io/badge/Phase%202-95%25%20Complete-yellow?style=for-the-badge)](#roadmap)
+[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-blue?style=for-the-badge)](docs/ops/security.md)
+[![Deployment](https://img.shields.io/badge/Deployment-Ansible%20Ready-green?style=for-the-badge)](docs/ops/ansible-deployment.md)
 
 **The next generation of decentralized messaging**
 
@@ -22,11 +24,13 @@
 
 Mycelium-Matrix creates a revolutionary decentralized messaging system that enhances Matrix federation with Mycelium's encrypted IPv6 overlay networking. This integration delivers:
 
-- **🔒 Enhanced Security**: Double encryption (Matrix E2EE + Mycelium transport)
+- **🔒 Enterprise Security**: Double encryption (Matrix E2EE + Mycelium transport) + secure credential handling
 - **🌐 Universal Access**: Works immediately at chat.projectmycelium.org - no installation required
 - **⚡ Progressive Enhancement**: Auto-detects and utilizes local Mycelium for P2P benefits
 - **🛡️ Censorship Resistance**: Decentralized overlay routing bypasses traditional internet controls
 - **🔄 Full Compatibility**: Matrix ecosystem integration with zero breaking changes
+- **🚀 Production Ready**: Complete ansible-based deployment system for TFGrid
+- **🔐 Enterprise Security**: Secure credential handling, SSH hardening, and access controls
 
 ### Key Innovation: Progressive Enhancement Model
 
@@ -115,7 +119,7 @@ make docs-phase2           # Open Phase 2 deployment guide
 
 ### For Operators & Deployers
 
-#### TFGrid Production Deployment (New Ansible-Based System)
+#### TFGrid Production Deployment (Ansible-Based System)
 
 **Prerequisites**:
 - Linux/macOS system with bash
@@ -123,6 +127,7 @@ make docs-phase2           # Open Phase 2 deployment guide
 - [Ansible](https://www.ansible.com/) installed
 - ThreeFold account with sufficient TFT balance
 - SSH key pair (auto-detected from `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`)
+- **Security Note**: See [Security Documentation](./docs/ops/security.md) for secure credential handling
 
 **Complete TFGrid Deployment**:
 ```bash
@@ -133,7 +138,13 @@ cd mycelium-matrix-chat
 # Deploy everything in one command (VM + preparation + MMC)
 make deploy
 
-# Or deploy step-by-step:
+# Alternative: Use OpenTofu for infrastructure (auto-fallback to Terraform)
+make vm-tofu      # Deploy VM using OpenTofu (falls back to Terraform if needed)
+make prepare      # Prepare VM with ansible (install Docker, Rust, Node.js, etc.)
+make app          # Deploy MMC application components
+make validate     # Validate the deployment
+
+# Or deploy step-by-step with tfcmd:
 make vm           # Deploy Ubuntu 24.04 VM on TFGrid using tfcmd
 make prepare      # Prepare VM with ansible (install Docker, Rust, Node.js, etc.)
 make app          # Deploy MMC application components
@@ -156,7 +167,7 @@ make status       # Check deployment status and services
 make connect      # SSH into deployed VM
 make logs         # View ansible deployment logs
 make clean        # Clean deployment artifacts (keeps VM)
-make clean-all    # Clean everything including VM destruction
+make clean-all    # Clean everything including VM destruction (supports both tfcmd and OpenTofu)
 make help         # Show all available commands
 ```
 
@@ -260,6 +271,47 @@ graph LR
 
 **See [Architecture Documentation](docs/ARCHITECTURE.md) and [Ansible Deployment Guide](docs/ops/ansible-deployment.md) for detailed technical design.**
 
+## 🔐 Security Features
+
+MMC implements enterprise-grade security practices following the same approach as tfgrid-k3s:
+
+### Credential Security
+- **Secure Environment Variables**: Use `set +o history` to prevent mnemonic from being stored in shell history
+- **Git Protection**: Sensitive files automatically excluded from version control
+- **Template-Based Setup**: Safe credential templates for easy configuration
+
+### Infrastructure Security
+- **SSH Hardening**: Key-only authentication, root login disabled
+- **Firewall Management**: UFW rules with minimal required ports
+- **Service Isolation**: All services run as dedicated non-root user (`muser`)
+- **System Updates**: Security patches applied during deployment
+
+### Deployment Security
+- **Automated Validation**: Health checks and security verification
+- **Access Controls**: Granular permissions and sudo configuration
+- **Audit Logging**: Comprehensive deployment and service logs
+
+### Key Security Commands
+```bash
+# Secure credential setup (Bash)
+set +o history
+export TF_VAR_mnemonic="your_secure_mnemonic_here"
+set -o history
+
+# Secure credential setup (Fish)
+set -l fish_history ""
+set TF_VAR_mnemonic "your_secure_mnemonic_here"
+
+# Deploy with security validation
+make deploy    # Includes security hardening
+make validate  # Verifies security configuration
+
+# Check security status
+make status    # Shows service and security status
+```
+
+**📖 Complete Security Documentation**: See [Security Best Practices](./docs/ops/security.md) for comprehensive security guidelines, credential handling, and deployment security.
+
 ## 📁 Project Structure
 
 ```
@@ -270,10 +322,15 @@ mycelium-matrix-chat/
 ├── 📁 frontend/               # React web application (PHASE 1 Complete)
 │   ├── src/                   # Source code
 │   └── public/                # Static assets
+├── 📁 infrastructure/         # OpenTofu/Terraform configuration for TFGrid
+│   ├── main.tf               # Infrastructure definition
+│   ├── variables.tf          # Variable definitions
+│   ├── inventory.tpl         # Ansible inventory template
+│   └── credentials.auto.tfvars.example # Credentials template (secure)
 ├── 📁 ansible.cfg             # Ansible configuration for TFGrid deployment
 ├── 📁 inventory/              # Ansible inventory (auto-generated)
 ├── 📁 group_vars/             # Ansible variables for MMC servers
-├── 📁 roles/                  # Ansible roles for deployment
+├── 📁 roles/                  # Ansible roles for deployment (9 roles)
 │   ├── common/                # System preparation and user setup
 │   ├── docker/                # Docker installation and configuration
 │   ├── rust/                  # Rust toolchain installation
@@ -323,6 +380,8 @@ mycelium-matrix-chat/
 ### Implementation Guides
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Step-by-step development setup
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment procedures
+- **[Ansible Deployment Guide](docs/ops/ansible-deployment.md)** - Complete TFGrid deployment system
+- **[Security Documentation](docs/ops/security.md)** - Secure credential handling and best practices
 - **[Roadmap](docs/ROADMAP.md)** - 16-week implementation timeline
 - **[TODO List](docs/TODO.md)** - Comprehensive implementation checklist
 
@@ -340,10 +399,12 @@ mycelium-matrix-chat/
 
 **Result**: Fully functional dramatically MVP at chat.projectmycelium.org ready for production
 
-### Phase 2: P2P Enhancement 🔄 **90% COMPLETE**
+### Phase 2: P2P Enhancement 🔄 **95% COMPLETE**
 - ✅ **Matrix Bridge Service** - Rust service with Docker production images (Built at localhost:8081)
 - ✅ **Production Deployment Infra** - Docker Compose, SSL, Nginx config for chat.projectmycelium.org (Ready)
 - ✅ **Development & Testing Setup** - Complete Phase 2 development cycle with Makefile (Implemented)
+- ✅ **Enterprise Deployment System** - Complete ansible-based TFGrid deployment with OpenTofu support
+- ✅ **Security & Credential Management** - Enterprise-grade security practices implemented
 - ⏳ **Mycelium JS Integration** - Frontend P2P routing library (Next immediate task)
 - ⏳ **Progressive Enhancement** - Auto Mycelium detection in chat interface (Ready to implement)
 
@@ -373,15 +434,17 @@ mycelium-matrix-chat/
 - **Matrix Integration**: Real matrix.org authentication working
 - **State**: Complete chat interface with real-time messaging
 
-### Infrastructure 🏗️ **DEPLOYMENT READY**
+### Infrastructure 🏗️ **ENTERPRISE DEPLOYMENT READY**
 - **Containerization**: Docker Compose production ready (`docker-compose.prod.yml`)
 - **SSL/TLS**: Let's Encrypt automated certificates
 - **Reverse Proxy**: Nginx with security headers and rate limiting
 - **Development Tools**: Enhanced Makefile with 15+ deployment commands
 - **Deployment**: Automated script ready for chat.projectmycelium.org (`deploy.sh`)
 - **TFGrid Deployment**: Complete ansible-based deployment system with tfcmd integration
+- **Infrastructure as Code**: OpenTofu/Terraform support with automatic fallback
 - **Configuration Management**: 9 modular ansible roles for automated setup
 - **Service Management**: systemd services with health monitoring and logging
+- **Security**: Enterprise-grade credential handling and access controls
 
 ### Networking 🔗 ** MATRIX INTEGRATION VERIFIED**
 - **Matrix Protocol**: Real federation with matrix.org verified

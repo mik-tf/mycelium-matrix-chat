@@ -10,11 +10,19 @@ The ThreeFold Grid deployment requires a mnemonic phrase for authentication, whi
 
 We recommend using environment variables with shell history protection:
 
+#### Bash/Zsh
 ```bash
 # This prevents your mnemonic from being stored in shell history
 set +o history
 export TF_VAR_mnemonic="your_mnemonic_phrase"
 set -o history
+```
+
+#### Fish Shell
+```fish
+# Disable history recording for this session
+set -l fish_history ""
+set TF_VAR_mnemonic "your_mnemonic_phrase"
 ```
 
 This approach:
@@ -77,6 +85,7 @@ MMC deployment uses SSH keys for secure VM access. Best practices:
 
 ### Setting Multiple Variables Securely
 
+#### Bash/Zsh
 ```bash
 # Disable history recording
 set +o history
@@ -90,14 +99,37 @@ export TF_VAR_cpu_cores="4"
 set -o history
 ```
 
+#### Fish Shell
+```fish
+# Disable history recording for this session
+set -l fish_history ""
+
+# Set your credentials
+set TF_VAR_mnemonic "your_mnemonic_phrase_here"
+set TF_VAR_node_id "6883"
+set TF_VAR_cpu_cores "4"
+```
+
 ### Clearing Sensitive Variables
 
+#### Bash/Zsh
 ```bash
 # Clear individual variables
 unset TF_VAR_mnemonic
 
 # Clear all TF_VAR_* variables
 unset $(env | grep '^TF_VAR_' | cut -d= -f1)
+```
+
+#### Fish Shell
+```fish
+# Clear individual variables
+set -e TF_VAR_mnemonic
+
+# Clear all TF_VAR_* variables
+for var in (env | grep '^TF_VAR_' | cut -d= -f1)
+    set -e $var
+end
 ```
 
 ## File-Based Security
