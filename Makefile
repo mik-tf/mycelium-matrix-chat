@@ -201,21 +201,23 @@ clean-all:
 			./scripts/tfcmd-cancel.sh || echo "⚠️  tfcmd VM destruction may have failed"; \
 		fi; \
 		if [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ]; then \
-			echo "   Trying infrastructure cleanup..."; \
-			cd infrastructure && (tofu destroy -auto-approve 2>/dev/null || terraform destroy -auto-approve 2>/dev/null) || echo "⚠️  Infrastructure cleanup may have failed"; \
+		    echo "   Trying infrastructure cleanup..."; \
+		    cd infrastructure && (tofu destroy -auto-approve 2>/dev/null || terraform destroy -auto-approve 2>/dev/null) || echo "⚠️  Infrastructure cleanup may have failed"; \
+		    cd ..; \
 		fi; \
 		if [ ! -f "scripts/tfcmd-cancel.sh" ] && [ ! -d "infrastructure" ]; then \
 			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
 		if [ -d "infrastructure" ]; then \
 			echo "   Cleaning up Terraform files..."; \
-			cd infrastructure && rm -rf .terraform/ .terraform.lock.hcl state.json terraform.tfstate* tfplan; \
+			cd infrastructure && rm -rf .terraform/ .terraform.lock.hcl state.json terraform.tfstate* tfplan .terraform* terraform.tfstate*; \
 		fi; \
 		echo "   Cleaning up WireGuard..."; \
 		if command -v wg-quick >/dev/null 2>&1 && [ -f "/etc/wireguard/mmc.conf" ]; then \
 			sudo wg-quick down mmc 2>/dev/null || echo "⚠️  Failed to bring down WireGuard"; \
 			sudo rm -f /etc/wireguard/mmc.conf; \
 		fi; \
+		rm -rf infrastructure/.terraform/ infrastructure/.terraform.lock.hcl infrastructure/state.json infrastructure/terraform.tfstate* infrastructure/tfplan infrastructure/.terraform* infrastructure/terraform.tfstate* \
 		rm -f ansible.log; \
 		rm -f inventory/hosts.ini.backup; \
 		rm -f wg-mmc.conf; \
