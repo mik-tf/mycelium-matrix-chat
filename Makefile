@@ -57,7 +57,7 @@ prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vv; then \
 			echo "✅ Ansible preparation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -74,7 +74,7 @@ app: inventory
 	@echo "🚀 Deploying MMC application..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application -vv; then \
 			echo "✅ Ansible application deployment completed successfully"; \
 			exit 0; \
 		fi; \
@@ -91,7 +91,7 @@ validate: inventory
 	@echo "🔍 Validating deployment..."
 	@for i in 1 2 3; do \
 		echo "   Attempt $$i of 3..."; \
-		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags validate -vvv; then \
+		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags validate -vv; then \
 			echo "✅ Ansible validation completed successfully"; \
 			exit 0; \
 		fi; \
