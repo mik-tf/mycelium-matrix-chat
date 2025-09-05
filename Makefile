@@ -61,17 +61,17 @@ vm-tofu:
 # Prepare VM (ansible preparation roles)
 prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -v
+	@ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vv
 
 # Deploy MMC application (ansible application roles)
 app: inventory
 	@echo "🚀 Deploying MMC application..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -v
+	@ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vv
 
 # Validate deployment
 validate: inventory
 	@echo "🔍 Validating deployment..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags validate -v
+	@ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vv
 
 # Generate ansible inventory from deployed VM
 inventory:
