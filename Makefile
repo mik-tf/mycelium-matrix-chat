@@ -61,17 +61,53 @@ vm:
 # Prepare VM (ansible preparation roles)
 prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vv
+	@for i in 1 2 3 4 5; do \
+		echo "   Attempt $$i of 5..."; \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vv; then \
+			echo "✅ Ansible preparation completed successfully"; \
+			exit 0; \
+		fi; \
+		if [ $$i -lt 5 ]; then \
+			echo "   ⚠️  Attempt $$i failed, waiting 30 seconds before retry..."; \
+			sleep 30; \
+		fi; \
+	done; \
+	echo "❌ All attempts failed. VM may not be ready yet."; \
+	exit 1
 
 # Deploy MMC application (ansible application roles)
 app: inventory
 	@echo "🚀 Deploying MMC application..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vv
+	@for i in 1 2 3 4 5; do \
+		echo "   Attempt $$i of 5..."; \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vv; then \
+			echo "✅ Ansible application deployment completed successfully"; \
+			exit 0; \
+		fi; \
+		if [ $$i -lt 5 ]; then \
+			echo "   ⚠️  Attempt $$i failed, waiting 30 seconds before retry..."; \
+			sleep 30; \
+		fi; \
+	done; \
+	echo "❌ All attempts failed. VM may not be ready yet."; \
+	exit 1
 
 # Validate deployment
 validate: inventory
 	@echo "🔍 Validating deployment..."
-	@ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vv
+	@for i in 1 2 3; do \
+		echo "   Attempt $$i of 3..."; \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vv; then \
+			echo "✅ Ansible validation completed successfully"; \
+			exit 0; \
+		fi; \
+		if [ $$i -lt 3 ]; then \
+			echo "   ⚠️  Attempt $$i failed, waiting 15 seconds before retry..."; \
+			sleep 15; \
+		fi; \
+	done; \
+	echo "❌ All attempts failed. VM may not be ready yet."; \
+	exit 1
 
 # Generate ansible inventory from deployed VM
 inventory:
@@ -118,6 +154,8 @@ status: inventory
 		echo ""; \
 		echo "🔍 Checking services..."; \
 		ansible -i inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
+		echo ""; \
+		echo "💡 Tip: If services check fails, try again in a few minutes as the VM may still be initializing"; \
 	else \
 		echo "ℹ️  No deployed VM found in inventory"; \
 		echo "   Run 'make deploy' to deploy MMC first"; \
