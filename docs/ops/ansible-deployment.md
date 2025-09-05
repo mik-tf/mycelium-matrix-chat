@@ -21,22 +21,23 @@ tfcmd deploy → VM ready → Ansible inventory → Ansible playbooks → MMC de
 
 ```
 mycelium-matrix-chat/
-├── ansible.cfg                 # Ansible configuration
-├── site.yml                    # Main playbook
-├── inventory/
-│   └── hosts.ini              # Generated inventory file
-├── group_vars/
-│   └── mmc_servers.yml        # Variables for MMC servers
-└── roles/
-    ├── common/                # System preparation
-    ├── docker/                # Docker installation
-    ├── rust/                  # Rust toolchain
-    ├── nodejs/                # Node.js installation
-    ├── mycelium/              # Mycelium client
-    ├── nginx/                 # Web server
-    ├── security/              # Firewall and SSH hardening
-    ├── mmc_deploy/            # MMC application deployment
-    └── validation/            # Post-deployment validation
+├── platform/                   # Ansible infrastructure (clean organization)
+│   ├── ansible.cfg             # Ansible configuration
+│   ├── site.yml                # Main playbook
+│   ├── inventory/
+│   │   └── hosts.ini          # Generated inventory file
+│   ├── group_vars/
+│   │   └── mmc_servers.yml    # Variables for MMC servers
+│   └── roles/
+│       ├── common/            # System preparation
+│       ├── docker/            # Docker installation
+│       ├── rust/              # Rust toolchain
+│       ├── nodejs/            # Node.js installation
+│       ├── mycelium/          # Mycelium client
+│       ├── nginx/             # Web server
+│       ├── security/          # Firewall and SSH hardening
+│       ├── mmc_deploy/        # MMC application deployment
+│       └── validation/        # Post-deployment validation
 ```
 
 ## Quick Start
@@ -164,23 +165,23 @@ mmc-node-1 ansible_host=YOUR_VM_IP ansible_user=root
 
 [mmc_servers:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-ansible_python_interpreter=/usr/bin/python3" > inventory/hosts.ini
+ansible_python_interpreter=/usr/bin/python3" > platform/inventory/hosts.ini
 
 # Run preparation
-ansible-playbook -i inventory/hosts.ini site.yml --tags preparation
+ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation
 
 # Run deployment
-ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application
+ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application
 
 # Run validation
-ansible-playbook -i inventory/hosts.ini site.yml --tags validate
+ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate
 ```
 
 ## Configuration
 
 ### Variables
 
-Edit `group_vars/mmc_servers.yml` to customize:
+Edit `platform/group_vars/mmc_servers.yml` to customize:
 
 ```yaml
 # User configuration
@@ -229,7 +230,7 @@ The deployment uses your default SSH key. To use a different key:
 Run with verbose output:
 
 ```bash
-ansible-playbook -i inventory/hosts.ini site.yml -vvv
+ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml -vvv
 ```
 
 ### Manual Recovery
@@ -244,7 +245,7 @@ ssh root@[VM_IP]
 systemctl list-units --type=service | grep mmc
 
 # Re-run specific role
-ansible-playbook -i inventory/hosts.ini site.yml --tags role_name
+ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags role_name
 ```
 
 ## Security Considerations

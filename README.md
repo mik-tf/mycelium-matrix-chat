@@ -353,19 +353,21 @@ mycelium-matrix-chat/
 │   ├── variables.tf          # Variable definitions
 │   ├── inventory.tpl         # Ansible inventory template
 │   └── credentials.auto.tfvars.example # Credentials template (secure)
-├── 📁 ansible.cfg             # Ansible configuration for TFGrid deployment
-├── 📁 inventory/              # Ansible inventory (auto-generated)
-├── 📁 group_vars/             # Ansible variables for MMC servers
-├── 📁 roles/                  # Ansible roles for deployment (9 roles)
-│   ├── common/                # System preparation and user setup
-│   ├── docker/                # Docker installation and configuration
-│   ├── rust/                  # Rust toolchain installation
-│   ├── nodejs/                # Node.js installation
-│   ├── mycelium/              # Mycelium P2P client setup
-│   ├── nginx/                 # Web server configuration
-│   ├── security/              # Firewall and SSH hardening
-│   ├── mmc_deploy/            # MMC application deployment
-│   └── validation/            # Post-deployment validation
+├── 📁 platform/               # Ansible infrastructure deployment (clean organization)
+│   ├── ansible.cfg            # Ansible configuration for TFGrid deployment
+│   ├── site.yml               # Main Ansible playbook
+│   ├── inventory/             # Ansible inventory (auto-generated)
+│   ├── group_vars/            # Ansible variables for MMC servers
+│   └── roles/                 # Ansible roles for deployment (9 roles)
+│       ├── common/            # System preparation and user setup
+│       ├── docker/            # Docker installation and configuration
+│       ├── rust/              # Rust toolchain installation
+│       ├── nodejs/            # Node.js installation
+│       ├── mycelium/          # Mycelium P2P client setup
+│       ├── nginx/             # Web server configuration
+│       ├── security/          # Firewall and SSH hardening
+│       ├── mmc_deploy/        # MMC application deployment
+│       └── validation/        # Post-deployment validation
 ├── 📁 config/                 # Configuration files for production
 │   ├── nginx.conf            # Nginx reverse proxy configuration
 │   └── mycelium.toml         # Mycelium node configuration

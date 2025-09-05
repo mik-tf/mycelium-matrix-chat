@@ -119,7 +119,7 @@ generate_inventory() {
     local ip="$1"
     log "📝 Generating ansible inventory..."
 
-    local inventory_file="$PROJECT_ROOT/inventory/hosts.ini"
+    local inventory_file="$PROJECT_ROOT/platform/inventory/hosts.ini"
 
     # Backup existing inventory
     if [ -f "$inventory_file" ]; then
@@ -177,21 +177,21 @@ run_ansible() {
 
     # Run preparation playbooks
     log "Running preparation playbooks..."
-    if ! ansible-playbook -i inventory/hosts.ini site.yml --tags preparation; then
+    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation; then
         error "Ansible preparation failed"
         exit 1
     fi
 
     # Run deployment playbook
     log "Running deployment playbook..."
-    if ! ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application; then
+    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application; then
         error "Ansible deployment failed"
         exit 1
     fi
 
     # Run validation
     log "Running validation..."
-    if ! ansible-playbook -i inventory/hosts.ini site.yml --tags validate,post-deploy; then
+    if ! ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate,post-deploy; then
         warning "Validation had some issues, but deployment may still be functional"
     fi
 

@@ -63,7 +63,7 @@ prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vvv; then \
+		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vvv; then \
 			echo "✅ Ansible preparation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -80,7 +80,7 @@ app: inventory
 	@echo "🚀 Deploying MMC application..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vvv; then \
+		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags deploy,application -vvv; then \
 			echo "✅ Ansible application deployment completed successfully"; \
 			exit 0; \
 		fi; \
@@ -97,7 +97,7 @@ validate: inventory
 	@echo "🔍 Validating deployment..."
 	@for i in 1 2 3; do \
 		echo "   Attempt $$i of 3..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vvv; then \
+		if ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags validate -vvv; then \
 			echo "✅ Ansible validation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -112,7 +112,7 @@ validate: inventory
 # Generate ansible inventory from deployed VM
 inventory:
 	@echo "📝 Checking/generating ansible inventory..."
-	@if [ ! -f "inventory/hosts.ini" ] || ! grep -q "ansible_host" inventory/hosts.ini; then \
+	@if [ ! -f "platform/inventory/hosts.ini" ] || ! grep -q "ansible_host" platform/inventory/hosts.ini; then \
 		echo "❌ No valid inventory found. Please run 'make deploy' first or create inventory manually."; \
 		exit 1; \
 	fi
@@ -121,8 +121,8 @@ inventory:
 # Connect to deployed VM
 connect: inventory
 	@echo "🔗 Connecting to MMC server..."
-	@if grep -q "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini; then \
-		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
+	@if grep -q "^[[:space:]]*[^#].*ansible_host" platform/inventory/hosts.ini; then \
+		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" platform/inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
 		if [ -z "$$VM_IP" ]; then \
 			echo "❌ Could not parse VM IP from inventory"; \
 			exit 1; \
@@ -143,9 +143,9 @@ connect: inventory
 status: inventory
 	@echo "📊 MMC Deployment Status"
 	@echo "========================"
-	@if grep -q "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini; then \
+	@if grep -q "^[[:space:]]*[^#].*ansible_host" platform/inventory/hosts.ini; then \
 		echo "✅ Found deployed VM in inventory"; \
-		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
+		VM_IP=$$(grep "^[[:space:]]*[^#].*ansible_host" platform/inventory/hosts.ini | head -1 | sed 's/.*ansible_host=//' | awk '{print $$1}'); \
 		if [ -z "$$VM_IP" ]; then \
 			echo "❌ Could not parse VM IP from inventory"; \
 			exit 1; \
@@ -153,7 +153,7 @@ status: inventory
 		echo "🌐 VM IP: $$VM_IP"; \
 		echo ""; \
 		echo "🔍 Checking services..."; \
-		ansible -i inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
+		ansible -c platform/ansible.cfg -i platform/inventory/hosts.ini mmc_servers -m shell -a "systemctl list-units --type=service --state=running | grep mmc" --one-line 2>/dev/null || echo "⚠️  Could not check services (VM may not be ready or ansible not configured)"; \
 		echo ""; \
 		echo "💡 Tip: If services check fails, try again in a few minutes as the VM may still be initializing"; \
 	else \
@@ -161,7 +161,7 @@ status: inventory
 		echo "   Run 'make deploy' to deploy MMC first"; \
 		echo ""; \
 		echo "📋 Current inventory:"; \
-		cat inventory/hosts.ini | grep -v "^#" | grep -v "^$$" | head -5; \
+		cat platform/inventory/hosts.ini | grep -v "^#" | grep -v "^$$" | head -5; \
 	fi
 
 # Show ansible logs
@@ -182,7 +182,7 @@ clean:
 	@read -p "Continue? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 		rm -f ansible.log; \
-		rm -f inventory/hosts.ini.backup; \
+		rm -f platform/inventory/hosts.ini.backup; \
 		echo "✅ Cleanup completed"; \
 	else \
 		echo "❌ Cleanup cancelled"; \
@@ -230,7 +230,7 @@ clean-all:
 		fi; \
 		rm -rf infrastructure/.terraform/ infrastructure/.terraform.lock.hcl infrastructure/state.json infrastructure/terraform.tfstate* infrastructure/tfplan infrastructure/.terraform* infrastructure/terraform.tfstate* \
 		rm -f ansible.log; \
-		rm -f inventory/hosts.ini.backup; \
+		rm -f platform/inventory/hosts.ini.backup; \
 		rm -f wg-mmc.conf; \
 		echo "✅ Full cleanup completed"; \
 	else \

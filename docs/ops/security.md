@@ -195,7 +195,7 @@ end
 The following files contain sensitive information and are protected by `.gitignore`:
 
 - `infrastructure/credentials.auto.tfvars` - Contains mnemonic and deployment settings
-- `inventory/hosts.ini` - Contains VM IP addresses and connection details
+- `platform/inventory/hosts.ini` - Contains VM IP addresses and connection details
 - `ansible.log` - May contain sensitive deployment information
 - `wg-mmc.conf` - WireGuard configuration (if used)
 
