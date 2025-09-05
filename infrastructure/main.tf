@@ -17,12 +17,6 @@ provider "grid" {
   network   = var.network
 }
 
-# SSH key for VM access
-resource "grid_sshkey" "mmc_key" {
-  name   = var.vm_name
-  ssh_key = file(var.ssh_public_key_path)
-}
-
 # MMC VM deployment
 resource "grid_deployment" "mmc_vm" {
   node         = var.node_id
@@ -39,7 +33,11 @@ resource "grid_deployment" "mmc_vm" {
     rootfs_size      = var.disk_gb * 1024    # Convert GB to MB
 
     env_vars = {
-      SSH_KEY = fileexists(var.ssh_public_key_path) ? file(var.ssh_public_key_path) : ""
+      SSH_KEY = fileexists(var.ssh_public_key_path) ? file(var.ssh_public_key_path) : (
+        fileexists(pathexpand("~/.ssh/id_ed25519.pub")) ?
+        file(pathexpand("~/.ssh/id_ed25519.pub")) :
+        file(pathexpand("~/.ssh/id_rsa.pub"))
+      )
     }
   }
 }

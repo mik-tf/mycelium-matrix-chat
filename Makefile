@@ -30,10 +30,11 @@ vm-tofu:
 		echo "   ✅ Using TF_VAR_mnemonic environment variable"; \
 	elif [ -f "$$HOME/.config/threefold/mnemonic" ]; then \
 		echo "   ✅ Using mnemonic from $$HOME/.config/threefold/mnemonic"; \
-		export TF_VAR_mnemonic=$$(cat "$$HOME/.config/threefold/mnemonic" | tr -d '\n'); \
-	elif [ -f "$$HOME/.threefold/mnemonic" ]; then \
-		echo "   ✅ Using mnemonic from $$HOME/.threefold/mnemonic"; \
-		export TF_VAR_mnemonic=$$(cat "$$HOME/.threefold/mnemonic" | tr -d '\n'); \
+		MNEMONIC_VALUE=$$(cat "$$HOME/.config/threefold/mnemonic" | tr -d '\n'); \
+		TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform -chdir=infrastructure init && \
+		TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform -chdir=infrastructure validate && \
+		TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform -chdir=infrastructure plan -out=tfplan && \
+		TF_VAR_mnemonic="$$MNEMONIC_VALUE" terraform -chdir=infrastructure apply tfplan; \
 	else \
 		echo "❌ ThreeFold mnemonic not found!"; \
 		echo "   Please set it using one of these methods:"; \
@@ -53,18 +54,6 @@ vm-tofu:
 		echo "      chmod 600 ~/.threefold/mnemonic"; \
 		exit 1; \
 	fi
-	@echo "   ✅ ThreeFold mnemonic configured securely"
-	@echo "   Cleaning up any existing lock files..."
-	@cd infrastructure && rm -f .terraform.lock.hcl
-	@cd infrastructure && rm -rf .terraform
-	@echo "   Initializing Terraform/OpenTofu..."
-	@cd infrastructure && terraform init
-	@echo "   Validating configuration..."
-	@cd infrastructure && terraform validate
-	@echo "   Planning deployment..."
-	@cd infrastructure && terraform plan -out=tfplan
-	@echo "   Applying infrastructure..."
-	@cd infrastructure && terraform apply tfplan
 	@echo "✅ Infrastructure deployment completed"
 	@echo "   Use 'make connect' to SSH into the VM"
 	@echo "   Use 'make prepare' to run ansible preparation"
