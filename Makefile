@@ -63,7 +63,7 @@ prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vv; then \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags preparation -vvv; then \
 			echo "✅ Ansible preparation completed successfully"; \
 			exit 0; \
 		fi; \
@@ -80,7 +80,7 @@ app: inventory
 	@echo "🚀 Deploying MMC application..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vv; then \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags deploy,application -vvv; then \
 			echo "✅ Ansible application deployment completed successfully"; \
 			exit 0; \
 		fi; \
@@ -97,7 +97,7 @@ validate: inventory
 	@echo "🔍 Validating deployment..."
 	@for i in 1 2 3; do \
 		echo "   Attempt $$i of 3..."; \
-		if ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vv; then \
+		if ansible-playbook -i inventory/hosts.ini site.yml --tags validate -vvv; then \
 			echo "✅ Ansible validation completed successfully"; \
 			exit 0; \
 		fi; \

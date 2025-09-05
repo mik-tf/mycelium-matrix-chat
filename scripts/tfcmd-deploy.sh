@@ -66,7 +66,7 @@ deploy_vm() {
     log "🚀 Deploying VM using tfcmd..."
 
     # Build the tfcmd command
-    TFCMD_CMD="tfcmd deploy vm --flist $FLIST --entrypoint $ENTRYPOINT --name $VM_NAME --ssh $SSH_KEY_PATH --cpu $CPU_CORES --memory $MEMORY_GB --disk $DISK_GB --node $NODE_ID"
+    TFCMD_CMD="tfcmd deploy vm --flist $FLIST --entrypoint $ENTRYPOINT --name $VM_NAME --ssh $SSH_KEY_PATH --no-color --cpu $CPU_CORES --memory $MEMORY_GB --disk $DISK_GB --node $NODE_ID"
     if [ "$ENABLE_MYCELIUM" = true ]; then
         TFCMD_CMD="$TFCMD_CMD --mycelium true"
     fi
