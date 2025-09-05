@@ -197,7 +197,6 @@ The following files contain sensitive information and are protected by `.gitigno
 - `infrastructure/credentials.auto.tfvars` - Contains mnemonic and deployment settings
 - `platform/inventory/hosts.ini` - Contains VM IP addresses and connection details
 - `ansible.log` - May contain sensitive deployment information
-- `wg-mmc.conf` - WireGuard configuration (if used)
 
 ### Backup Security
 

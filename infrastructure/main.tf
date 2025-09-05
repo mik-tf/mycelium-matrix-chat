@@ -57,7 +57,7 @@ resource "grid_network" "mmc_network" {
   ip_range      = var.network_ip_range
   name          = "${var.vm_name}_network"
   description   = "Network for MMC deployment"
-  add_wg_access = true
+  add_wg_access = false  # Disabled since MMC uses mycelium networking
   mycelium_keys = {
     (var.node_id) = random_bytes.mycelium_key.hex
   }
@@ -72,11 +72,11 @@ resource "local_file" "ansible_inventory" {
   })
 }
 
-# Generate WireGuard configuration for access
-resource "local_file" "wireguard_config" {
-  filename = "${path.root}/../wg-mmc.conf"
-  content  = grid_network.mmc_network.access_wg_config
-}
+# WireGuard configuration disabled since MMC uses mycelium networking
+# resource "local_file" "wireguard_config" {
+#   filename = "${path.root}/../wg-mmc.conf"
+#   content  = grid_network.mmc_network.access_wg_config
+# }
 
 # Outputs
 output "vm_mycelium_ip" {
@@ -94,7 +94,8 @@ output "network_name" {
   description = "Name of the created network"
 }
 
-output "wireguard_config_path" {
-  value = local_file.wireguard_config.filename
-  description = "Path to WireGuard configuration file"
-}
+# WireGuard config disabled since MMC uses mycelium
+# output "wireguard_config_path" {
+#   value = local_file.wireguard_config.filename
+#   description = "Path to WireGuard configuration file"
+# }
