@@ -80,3 +80,9 @@ variable "network_ip_range" {
   type        = string
   default     = "10.1.0.0/16"
 }
+
+variable "wireguard_endpoint" {
+  description = "WireGuard endpoint IP for access (optional, leave empty for auto-detection)"
+  type        = string
+  default     = ""
+}

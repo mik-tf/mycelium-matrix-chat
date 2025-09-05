@@ -1,5 +1,5 @@
 #!/usr/bin/make
-.PHONY: all deploy prepare app connect clean status logs help validate inventory
+.PHONY: all deploy prepare app connect clean status logs help validate inventory wireguard
 
 # Default target - complete deployment
 all: deploy
@@ -167,6 +167,11 @@ clean-all:
 		else \
 			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
+		echo "   Cleaning up WireGuard..."; \
+		if command -v wg-quick >/dev/null 2>&1 && [ -f "/etc/wireguard/mmc.conf" ]; then \
+			sudo wg-quick down mmc 2>/dev/null || echo "⚠️  Failed to bring down WireGuard"; \
+			sudo rm -f /etc/wireguard/mmc.conf; \
+		fi; \
 		rm -f ansible.log; \
 		rm -f inventory/hosts.ini.backup; \
 		rm -f wg-mmc.conf; \
@@ -174,6 +179,12 @@ clean-all:
 	else \
 		echo "❌ Cleanup cancelled"; \
 	fi
+
+# Set up wireguard connection
+wireguard:
+	@echo "🔗 Setting up WireGuard connection..."
+	@chmod +x scripts/wg.sh
+	@./scripts/wg.sh
 
 # Show help information
 help:
@@ -194,6 +205,7 @@ help:
 	@echo "  make logs         - Show ansible logs"
 	@echo "  make clean        - Clean deployment artifacts (keeps VM)"
 	@echo "  make clean-all    - Clean everything including VM"
+	@echo "  make wireguard    - Set up the WireGuard connection"
 	@echo "  make help         - Show this help"
 	@echo ""
 	@echo "Prerequisites:"
