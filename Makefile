@@ -198,11 +198,13 @@ clean-all:
 		echo "💥 Destroying VM..."; \
 		if [ -f "scripts/tfcmd-cancel.sh" ]; then \
 			chmod +x scripts/tfcmd-cancel.sh; \
-			./scripts/tfcmd-cancel.sh || echo "⚠️  VM destruction may have failed"; \
-		elif [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ]; then \
+			./scripts/tfcmd-cancel.sh || echo "⚠️  tfcmd VM destruction may have failed"; \
+		fi; \
+		if [ -d "infrastructure" ] && [ -f "infrastructure/main.tf" ]; then \
 			echo "   Trying infrastructure cleanup..."; \
 			cd infrastructure && (tofu destroy -auto-approve 2>/dev/null || terraform destroy -auto-approve 2>/dev/null) || echo "⚠️  Infrastructure cleanup may have failed"; \
-		else \
+		fi; \
+		if [ ! -f "scripts/tfcmd-cancel.sh" ] && [ ! -d "infrastructure" ]; then \
 			echo "⚠️  No cleanup script found, skipping VM destruction"; \
 		fi; \
 		if [ -d "infrastructure" ]; then \
@@ -237,8 +239,8 @@ help:
 	@echo "  make              - Run complete deployment (VM + preparation + app)"
 	@echo "  make all          - Same as 'make'"
 	@echo "  make deploy       - Complete deployment (tfcmd + ansible)"
-	@echo "  make vm           - Deploy VM only using tfcmd"
-	@echo "  make vm-tofu      - Deploy VM only using OpenTofu (falls back to Terraform)"
+	@echo "  make vm-tfcmd     - Deploy VM only using tfcmd"
+	@echo "  make vm           - Deploy VM only using OpenTofu (falls back to Terraform)"
 	@echo "  make prepare      - Run ansible preparation roles only"
 	@echo "  make app          - Deploy MMC application only"
 	@echo "  make validate     - Validate deployment"
