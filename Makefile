@@ -129,9 +129,9 @@ connect: inventory
 		fi; \
 		echo "Connecting to: $$VM_IP"; \
 		if echo "$$VM_IP" | grep -q ':'; then \
-			ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_ed25519 root@$$VM_IP; \
+			ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@$$VM_IP; \
 		else \
-			ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_ed25519 root@$$VM_IP; \
+			ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 root@$$VM_IP; \
 		fi; \
 	else \
 		echo "ℹ️  No deployed VM found in inventory"; \
