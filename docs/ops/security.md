@@ -8,7 +8,7 @@ The ThreeFold Grid deployment requires a mnemonic phrase for authentication, whi
 
 ### Secure Method for Setting Credentials
 
-We recommend using environment variables with shell history protection:
+We recommend using environment variables with shell history protection. The variable name `TF_VAR_mnemonic` corresponds to the `mnemonic` variable defined in `infrastructure/variables.tf` and used in `infrastructure/main.tf`.
 
 #### Bash/Zsh
 ```bash
@@ -22,7 +22,23 @@ set -o history
 ```fish
 # Disable history recording for this session
 set -l fish_history ""
-set TF_VAR_mnemonic "your_mnemonic_phrase"
+# Export variable so subprocesses (like OpenTofu) can see it
+set -x TF_VAR_mnemonic "your_mnemonic_phrase"
+```
+
+**✅ Variable Mapping Confirmed**: `TF_VAR_mnemonic` → `var.mnemonic` → OpenTofu/Terraform provider
+
+### Verifying Variable Setup
+
+You can verify that OpenTofu/Terraform is reading your environment variable correctly:
+
+```bash
+# Check if variable is set
+echo $TF_VAR_mnemonic  # Should show your mnemonic (be careful!)
+
+# Test OpenTofu variable reading
+cd infrastructure
+tofu plan  # Should not ask for mnemonic input if TF_VAR_mnemonic is set
 ```
 
 This approach:
@@ -104,10 +120,10 @@ set -o history
 # Disable history recording for this session
 set -l fish_history ""
 
-# Set your credentials
-set TF_VAR_mnemonic "your_mnemonic_phrase_here"
-set TF_VAR_node_id "6883"
-set TF_VAR_cpu_cores "4"
+# Export variables so subprocesses (like OpenTofu) can see them
+set -x TF_VAR_mnemonic "your_mnemonic_phrase_here"
+set -x TF_VAR_node_id "6883"
+set -x TF_VAR_cpu_cores "4"
 ```
 
 ### Clearing Sensitive Variables

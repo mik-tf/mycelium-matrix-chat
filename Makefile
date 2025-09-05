@@ -25,6 +25,11 @@ vm-tofu:
 		echo "   and configure your settings."; \
 		exit 1; \
 	fi
+	@echo "   Checking for lock file conflicts..."
+	@if [ -f "infrastructure/.terraform.lock.hcl" ]; then \
+		echo "   ⚠️  Found Terraform lock file, removing to avoid conflicts..."; \
+		rm -f infrastructure/.terraform.lock.hcl; \
+	fi
 	@echo "   Initializing OpenTofu..."
 	@if ! cd infrastructure && tofu init 2>/dev/null; then \
 		echo "⚠️  OpenTofu provider not available. Falling back to Terraform..."; \

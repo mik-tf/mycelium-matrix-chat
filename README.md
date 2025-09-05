@@ -295,12 +295,12 @@ MMC implements enterprise-grade security practices following the same approach a
 ```bash
 # Secure credential setup (Bash)
 set +o history
-export TF_VAR_mnemonic="your_secure_mnemonic_here"
+export TF_VAR_mnemonic="your_secure_mnemonic_here"  # Maps to var.mnemonic in Terraform
 set -o history
 
 # Secure credential setup (Fish)
 set -l fish_history ""
-set TF_VAR_mnemonic "your_secure_mnemonic_here"
+set -x TF_VAR_mnemonic "your_secure_mnemonic_here"  # Maps to var.mnemonic in Terraform
 
 # Deploy with security validation
 make deploy    # Includes security hardening
@@ -309,6 +309,8 @@ make validate  # Verifies security configuration
 # Check security status
 make status    # Shows service and security status
 ```
+
+**✅ Variable Mapping**: `TF_VAR_mnemonic` → `var.mnemonic` → OpenTofu/Terraform provider
 
 **📖 Complete Security Documentation**: See [Security Best Practices](./docs/ops/security.md) for comprehensive security guidelines, credential handling, and deployment security.
 
