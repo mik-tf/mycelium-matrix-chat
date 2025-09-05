@@ -13,8 +13,14 @@ terraform {
 
 # Configure the provider
 provider "grid" {
-  mnemonic = var.mnemonic
+  mnemonic  = var.mnemonic
   network   = var.network
+  relay_url = "wss://relay.grid.tf"
+}
+
+# Generate mycelium IP seed
+resource "random_bytes" "mycelium_ip_seed" {
+  length = 6
 }
 
 # MMC VM deployment
@@ -27,7 +33,7 @@ resource "grid_deployment" "mmc_vm" {
     flist            = var.flist
     entrypoint       = var.entrypoint
     publicip         = false
-    mycelium_ip_seed = var.enable_mycelium
+    mycelium_ip_seed = random_bytes.mycelium_ip_seed.hex
     cpu              = var.cpu_cores
     memory           = var.memory_gb * 1024  # Convert GB to MB
     rootfs_size      = var.disk_gb * 1024    # Convert GB to MB
