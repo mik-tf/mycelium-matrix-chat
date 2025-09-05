@@ -81,7 +81,7 @@ infrastructure/tfplan
 state.json
 
 # Ansible temporary files
-inventory/hosts.ini.backup
+platform/inventory/hosts.ini.backup
 ansible.log
 *.retry
 

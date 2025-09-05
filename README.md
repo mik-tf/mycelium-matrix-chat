@@ -597,7 +597,7 @@ tfcmd balance
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_ed25519 root@VM_IP
 
 # Check ansible connectivity
-ansible -i inventory/hosts.ini mmc_servers -m ping
+ansible -c platform/ansible.cfg -i platform/inventory/hosts.ini mmc_servers -m ping
 
 # View ansible logs
 make logs
@@ -618,14 +618,14 @@ ssh root@[VM_IP] "systemctl restart mmc-web-gateway mmc-matrix-bridge mmc-fronte
 #### Common Issues
 
 **SSH Connection Failed**
-- Verify VM IP in `inventory/hosts.ini`
+- Verify VM IP in `platform/inventory/hosts.ini`
 - Check SSH key permissions: `chmod 600 ~/.ssh/id_ed25519`
 - Ensure VM has finished booting (wait 2-3 minutes after deployment)
 
 **Ansible Role Failed**
 - Check ansible logs: `make logs`
 - Verify internet connectivity on VM
-- Run roles individually: `ansible-playbook -i inventory/hosts.ini site.yml --tags role_name`
+- Run roles individually: `ansible-playbook -c platform/ansible.cfg -i platform/inventory/hosts.ini platform/site.yml --tags role_name`
 
 **Services Not Starting**
 - Check service status: `make status`

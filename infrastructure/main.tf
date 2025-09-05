@@ -65,7 +65,7 @@ resource "grid_network" "mmc_network" {
 
 # Generate Ansible inventory
 resource "local_file" "ansible_inventory" {
-  filename = "${path.root}/../inventory/hosts.ini"
+  filename = "${path.root}/../platform/inventory/hosts.ini"
   content = templatefile("${path.root}/inventory.tpl", {
     vm_ip = grid_deployment.mmc_vm.vms[0].mycelium_ip
     ssh_key_path = var.ssh_private_key_path
