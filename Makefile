@@ -5,7 +5,7 @@
 all: deploy
 
 # Complete deployment (VM + preparation + application)
-deploy: vm prepare app
+deploy: vm prepare app validate
 	@echo "🚀 Complete MMC deployment finished!"
 	@echo "   Use 'make connect' to SSH into the VM"
 	@echo "   Use 'make status' to check deployment status"
