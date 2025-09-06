@@ -9,6 +9,23 @@ deploy: vm prepare app validate
 	@echo "🚀 Complete MMC deployment finished!"
 	@echo "   Use 'make connect' to SSH into the VM"
 	@echo "   Use 'make status' to check deployment status"
+	@echo ""
+	@echo "📋 Deployment Summary:"
+	@if [ "$$TF_VAR_enable_public_ipv4" = "true" ]; then \
+		echo "   Type: IPv4 + Domain (~1.0 TFT/month)"; \
+		echo "   Public IP: Check 'terraform output vm_public_ip'"; \
+		echo "   Domain: Configure DNS to point to public IP"; \
+	else \
+		echo "   Type: Mycelium-Only (~0.5 TFT/month)"; \
+	fi
+	@echo ""
+	@echo "🔗 Access Information:"
+	@echo "   Mycelium: Check 'terraform output vm_mycelium_ip'"
+	@if [ "$$TF_VAR_enable_public_ipv4" = "true" ]; then \
+		echo "   Domain: https://yourdomain.com (after DNS setup)"; \
+	fi
+	@echo ""
+	@echo "📖 See docs/PRODUCTION_DEPLOYMENT_GUIDE.md for complete setup instructions"
 
 # Deploy VM using OpenTofu/Terraform (alternative to tfcmd)
 vm:

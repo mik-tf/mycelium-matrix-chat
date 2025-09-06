@@ -27,6 +27,19 @@ make deploy                                # Mycelium-only (default)
 make status
 ```
 
+### **Interactive Deployment Script:**
+```bash
+# For guided deployment with choices
+./scripts/deploy-flexible.sh
+
+# This script will:
+# - Ask you to choose deployment type
+# - Guide you through domain setup (if IPv4)
+# - Set credentials automatically
+# - Run the deployment
+# - Show you the access URLs
+```
+
 ### **Infrastructure Configuration Note:**
 To enable the flexible deployment options, update `infrastructure/main.tf`:
 ```terraform

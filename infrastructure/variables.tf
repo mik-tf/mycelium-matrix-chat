@@ -86,3 +86,10 @@ variable "wireguard_endpoint" {
   type        = string
   default     = ""
 }
+
+# Flexible Deployment Options
+variable "enable_public_ipv4" {
+  description = "Enable public IPv4 access for domain-based deployment"
+  type        = bool
+  default     = false
+}

@@ -143,6 +143,11 @@ Choose between two deployment types based on your needs:
 - Same application, different access methods
 - Maximum flexibility and user choice
 
+#### Quick Deployment Script
+- **[Flexible Deployment Script](scripts/deploy-flexible.sh)** - Interactive deployment script
+- Choose your deployment type and get guided setup
+- Automatic configuration based on your choices
+
 #### TFGrid Production Deployment (Ansible-Based System)
 
 **Prerequisites**:

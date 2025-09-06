@@ -35,7 +35,7 @@ resource "grid_deployment" "mmc_vm" {
     name             = var.vm_name
     flist            = var.flist
     entrypoint       = var.entrypoint
-    publicip         = false
+    publicip         = var.enable_public_ipv4
     mycelium_ip_seed = random_bytes.mycelium_ip_seed.hex
     cpu              = var.cpu_cores
     memory           = var.memory_gb * 1024  # Convert GB to MB
@@ -84,6 +84,11 @@ output "vm_mycelium_ip" {
   description = "Mycelium IP address of the deployed VM"
 }
 
+output "vm_public_ip" {
+  value = var.enable_public_ipv4 ? grid_deployment.mmc_vm.vms[0].computedip : null
+  description = "Public IPv4 address (only available when enable_public_ipv4 = true)"
+}
+
 output "vm_name" {
   value = var.vm_name
   description = "Name of the deployed VM"
@@ -92,6 +97,21 @@ output "vm_name" {
 output "network_name" {
   value = grid_network.mmc_network.name
   description = "Name of the created network"
+}
+
+output "deployment_type" {
+  value = var.enable_public_ipv4 ? "IPv4 + Domain" : "Mycelium-Only"
+  description = "Type of deployment based on IPv4 configuration"
+}
+
+output "access_urls" {
+  value = var.enable_public_ipv4 ? [
+    "https://[domain]:443 (configure DNS)",
+    "https://${grid_deployment.mmc_vm.vms[0].mycelium_ip}:443"
+  ] : [
+    "https://${grid_deployment.mmc_vm.vms[0].mycelium_ip}:443"
+  ]
+  description = "Available access URLs for the deployment"
 }
 
 # WireGuard config disabled since MMC uses mycelium
