@@ -30,13 +30,6 @@
     - role: nodejs
       tags: [nodejs, preparation]
 
-- name: Install Mycelium
-  hosts: mmc_servers
-  become: yes
-  roles:
-    - role: mycelium
-      tags: [mycelium, preparation]
-
 - name: Install and Configure Nginx
   hosts: mmc_servers
   become: yes
