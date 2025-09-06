@@ -126,13 +126,13 @@ make docs-phase2           # Open Phase 2 deployment guide
 #### Flexible Deployment Options
 Choose between two deployment types based on your needs:
 
-**🌐 IPv4 + Domain Deployment** (~1.0 TFT/month)
+**🌐 IPv4 + Domain Deployment**
 - Access via: `https://chat.example.com`
 - Public accessibility for all users
 - Standard HTTPS with SSL certificates
 - Best for production public services
 
-**🔒 Mycelium-Only Deployment** (~0.5 TFT/month)
+**🔒 Mycelium-Only Deployment**
 - Access via: `https://[mycelium-ip]:443`
 - Enhanced P2P privacy and performance
 - Cost-effective for private deployments

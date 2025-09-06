@@ -18,8 +18,8 @@ cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.aut
 nano infrastructure/credentials.auto.tfvars
 
 # 3. Set your deployment type:
-# enable_public_ipv4 = true   # IPv4 + Domain (~1.0 TFT/month)
-# enable_public_ipv4 = false  # Mycelium-only (~0.5 TFT/month)
+# enable_public_ipv4 = true   # IPv4 + Domain deployment
+# enable_public_ipv4 = false  # Mycelium-only deployment
 
 # 4. Deploy - automatically uses your configuration
 make deploy
@@ -27,20 +27,6 @@ make deploy
 # 5. Get access URLs
 make status
 ```
-
-#### **Interactive Script Method (Alternative)**
-```bash
-# For guided deployment with choices
-./scripts/deploy-flexible.sh
-
-# This script will:
-# - Ask you to choose deployment type
-# - Guide you through domain setup (if IPv4)
-# - Set credentials automatically
-# - Run the deployment
-# - Show you the access URLs
-```
-
 ### **Infrastructure Configuration:**
 The flexible deployment options are already configured in the infrastructure:
 
@@ -51,7 +37,7 @@ The flexible deployment options are already configured in the infrastructure:
 ## 📋 Prerequisites
 
 ### Required Accounts & Tools
-- **ThreeFold Account**: With sufficient TFT balance (minimum 0.5 TFT)
+- **ThreeFold Account**: With sufficient balance
 - **Domain Registrar**: Access to DNS management for your domain
 - **SSH Key Pair**: For secure VM access
 - **Linux/macOS System**: With bash shell
@@ -66,19 +52,16 @@ The flexible deployment options are already configured in the infrastructure:
 ### 1.1 Deployment Options
 
 #### **Option A: IPv4 + Domain (Public Production)**
-- **Cost**: ~1.0 TFT/month
 - **Access**: `https://chat.example.com`
 - **Use Case**: Public production deployment
 - **Requirements**: Domain name + DNS configuration
 
 #### **Option B: Mycelium-Only (Private P2P)**
-- **Cost**: ~0.5 TFT/month
 - **Access**: `https://[mycelium-ip]:443`
 - **Use Case**: Private deployment, testing
 - **Requirements**: None (automatic mycelium IP)
 
 #### **Option C: Dual Access (Maximum Flexibility)**
-- **Cost**: ~1.0 TFT/month
 - **Access**: Both URLs above
 - **Use Case**: Best of both worlds
 - **Requirements**: Domain name + DNS configuration
@@ -157,7 +140,7 @@ chmod 600 ~/.config/threefold/mnemonic
 
 ### 3.2 Choose and Deploy Your Infrastructure
 
-#### **IPv4 + Domain Deployment** (~1.0 TFT/month)
+#### **IPv4 + Domain Deployment**
 ```bash
 # Clone the repository
 git clone https://github.com/mik-tf/mycelium-matrix-chat.git
@@ -174,7 +157,7 @@ nano infrastructure/credentials.auto.tfvars
 make deploy
 ```
 
-#### **Mycelium-Only Deployment** (~0.5 TFT/month)
+#### **Mycelium-Only Deployment**
 ```bash
 # Clone the repository
 git clone https://github.com/mik-tf/mycelium-matrix-chat.git
@@ -564,12 +547,10 @@ Your Mycelium-Matrix Chat is now live at `https://chat.example.com` with full P2
 - ✅ You need public accessibility for all users
 - ✅ You're building a public production service
 - ✅ You want SSL certificates and standard HTTPS
-- ✅ Cost is not a primary concern (~1.0 TFT/month)
 
 #### **Choose Mycelium-Only If:**
 - ✅ You want maximum privacy and P2P benefits
 - ✅ You're deploying for private groups or testing
-- ✅ You want to minimize costs (~0.5 TFT/month)
 - ✅ You don't need traditional domain access
 - ✅ Your users are technically savvy
 
