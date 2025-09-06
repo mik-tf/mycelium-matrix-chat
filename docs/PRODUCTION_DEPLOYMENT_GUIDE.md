@@ -5,32 +5,30 @@ This guide provides step-by-step instructions for deploying Mycelium-Matrix Chat
 
 ## 🎯 Quick Deployment Reference
 
-### **Choose Your Deployment Type:**
-
-| Type | Environment Variable | Cost | Access URLs | Use Case |
-|------|---------------------|------|-------------|----------|
-| **IPv4 + Domain** | `TF_VAR_enable_public_ipv4=true` | ~1.0 TFT/month | `https://chat.example.com`<br>`https://[mycelium-ip]:443` | Public production |
-| **Mycelium-Only** | `TF_VAR_enable_public_ipv4=false` | ~0.5 TFT/month | `https://[mycelium-ip]:443` | Private P2P |
-| **Dual Access** | `TF_VAR_enable_public_ipv4=true` | ~1.0 TFT/month | Both URLs above | Maximum flexibility |
-
 ### **Quick Start Commands:**
 
-#### **Simple Environment Variable Method (Recommended)**
+#### **Perfect Configuration File Method (Recommended)**
 ```bash
-# 1. Set credentials and deployment type (do this once)
-export TF_VAR_mnemonic="your_mnemonic"
-export TF_VAR_enable_public_ipv4=true   # IPv4 + Domain (~1.0 TFT/month)
-# OR
-export TF_VAR_enable_public_ipv4=false  # Mycelium-only (~0.5 TFT/month)
+# 1. Clone the repository
+git clone https://github.com/mik-tf/mycelium-matrix-chat.git
+cd mycelium-matrix-chat
 
-# 2. Deploy - automatically uses your configuration
+# 2. Copy and edit configuration
+cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.auto.tfvars
+nano infrastructure/credentials.auto.tfvars
+
+# 3. Set your deployment type:
+# enable_public_ipv4 = true   # IPv4 + Domain (~1.0 TFT/month)
+# enable_public_ipv4 = false  # Mycelium-only (~0.5 TFT/month)
+
+# 4. Deploy - automatically uses your configuration
 make deploy
 
-# 3. Get access URLs
+# 5. Get access URLs
 make status
 ```
 
-#### **Interactive Script Method**
+#### **Interactive Script Method (Alternative)**
 ```bash
 # For guided deployment with choices
 ./scripts/deploy-flexible.sh
@@ -165,8 +163,12 @@ chmod 600 ~/.config/threefold/mnemonic
 git clone https://github.com/mik-tf/mycelium-matrix-chat.git
 cd mycelium-matrix-chat
 
-# Enable IPv4 for domain access
-export TF_VAR_enable_public_ipv4=true
+# Copy and configure deployment settings
+cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.auto.tfvars
+nano infrastructure/credentials.auto.tfvars
+
+# Set: enable_public_ipv4 = true
+# Also configure: node_id, vm_name, etc.
 
 # Deploy complete infrastructure
 make deploy
@@ -178,8 +180,12 @@ make deploy
 git clone https://github.com/mik-tf/mycelium-matrix-chat.git
 cd mycelium-matrix-chat
 
-# IPv4 disabled (mycelium-only) - this is the default
-# export TF_VAR_enable_public_ipv4=false  # Optional, this is default
+# Copy and configure deployment settings
+cp infrastructure/credentials.auto.tfvars.example infrastructure/credentials.auto.tfvars
+nano infrastructure/credentials.auto.tfvars
+
+# Keep: enable_public_ipv4 = false (default)
+# Also configure: node_id, vm_name, etc.
 
 # Deploy complete infrastructure
 make deploy
