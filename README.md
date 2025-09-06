@@ -123,6 +123,26 @@ make docs-phase2           # Open Phase 2 deployment guide
 - **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment with DNS configuration for `chat.example.com`
 - Includes SSL setup, testing, monitoring, and troubleshooting
 
+#### Flexible Deployment Options
+Choose between two deployment types based on your needs:
+
+**🌐 IPv4 + Domain Deployment** (~1.0 TFT/month)
+- Access via: `https://chat.example.com`
+- Public accessibility for all users
+- Standard HTTPS with SSL certificates
+- Best for production public services
+
+**🔒 Mycelium-Only Deployment** (~0.5 TFT/month)
+- Access via: `https://[mycelium-ip]:443`
+- Enhanced P2P privacy and performance
+- Cost-effective for private deployments
+- Perfect for mycelium network users
+
+**📱 Dual Access (IPv4 + Mycelium)**
+- When IPv4 is enabled, users can access via both URLs
+- Same application, different access methods
+- Maximum flexibility and user choice
+
 #### TFGrid Production Deployment (Ansible-Based System)
 
 **Prerequisites**:
