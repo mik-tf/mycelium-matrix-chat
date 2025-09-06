@@ -7,23 +7,23 @@ This guide provides step-by-step instructions for deploying Mycelium-Matrix Chat
 
 ### **Choose Your Deployment Type:**
 
-| Type | Command | Cost | Access URLs | Use Case |
-|------|---------|------|-------------|----------|
-| **IPv4 + Domain** | `TF_VAR_enable_public_ipv4=true make deploy` | ~1.0 TFT/month | `https://chat.example.com`<br>`https://[mycelium-ip]:443` | Public production |
-| **Mycelium-Only** | `make deploy` | ~0.5 TFT/month | `https://[mycelium-ip]:443` | Private P2P |
-| **Dual Access** | `TF_VAR_enable_public_ipv4=true make deploy` | ~1.0 TFT/month | Both URLs above | Maximum flexibility |
+| Type | Environment Variable | Cost | Access URLs | Use Case |
+|------|---------------------|------|-------------|----------|
+| **IPv4 + Domain** | `TF_VAR_enable_public_ipv4=true` | ~1.0 TFT/month | `https://chat.example.com`<br>`https://[mycelium-ip]:443` | Public production |
+| **Mycelium-Only** | `TF_VAR_enable_public_ipv4=false` | ~0.5 TFT/month | `https://[mycelium-ip]:443` | Private P2P |
+| **Dual Access** | `TF_VAR_enable_public_ipv4=true` | ~1.0 TFT/month | Both URLs above | Maximum flexibility |
 
 ### **Quick Start Commands:**
 
 #### **Simple Environment Variable Method (Recommended)**
 ```bash
-# 1. Set credentials and deployment type
+# 1. Set credentials and deployment type (do this once)
 export TF_VAR_mnemonic="your_mnemonic"
 export TF_VAR_enable_public_ipv4=true   # IPv4 + Domain (~1.0 TFT/month)
 # OR
 export TF_VAR_enable_public_ipv4=false  # Mycelium-only (~0.5 TFT/month)
 
-# 2. Deploy with your configuration
+# 2. Deploy - automatically uses your configuration
 make deploy
 
 # 3. Get access URLs
