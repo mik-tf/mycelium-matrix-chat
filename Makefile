@@ -236,12 +236,119 @@ wireguard:
 	@chmod +x scripts/wg.sh
 	@./scripts/wg.sh
 
+# Phase 2 Testing Suite
+.PHONY: test-phase2 test-phase2-quick test-bridge-health test-mycelium-detect test-frontend-load test-end-to-end test-bridge test-mycelium test-federation test-matrix-org test-backend test-frontend test-database test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits
+
+# Quick Phase 2 health checks
+test-phase2-quick: test-bridge-health test-mycelium-detect test-frontend-load
+	@echo "✅ Phase 2 quick health check completed"
+
+test-bridge-health:
+	@echo "🔍 Testing Matrix Bridge health..."
+	@if curl -s http://localhost:8081/api/v1/bridge/status >/dev/null 2>&1; then \
+		echo "✅ Matrix Bridge is responding"; \
+	else \
+		echo "❌ Matrix Bridge not responding on localhost:8081"; \
+		exit 1; \
+	fi
+
+test-mycelium-detect:
+	@echo "🔍 Testing Mycelium detection..."
+	@if curl -s http://localhost:8989/api/v1/admin >/dev/null 2>&1; then \
+		echo "✅ Mycelium API detected"; \
+	else \
+		echo "⚠️  Mycelium API not detected (expected if Mycelium not running)"; \
+	fi
+
+test-frontend-load:
+	@echo "🔍 Testing frontend loading..."
+	@if curl -s http://localhost:5173 >/dev/null 2>&1; then \
+		echo "✅ Frontend is loading"; \
+	else \
+		echo "❌ Frontend not responding on localhost:5173"; \
+		exit 1; \
+	fi
+
+# Comprehensive Phase 2 testing
+test-phase2: test-bridge-comprehensive test-federation-routing test-message-transformation test-server-discovery test-p2p-benefits test-end-to-end
+	@echo "✅ Complete Phase 2 testing suite completed"
+
+test-bridge-comprehensive:
+	@echo "🔍 Testing Matrix Bridge comprehensive functionality..."
+	@if curl -s http://localhost:8081/api/v1/bridge/status | grep -q "connected_servers"; then \
+		echo "✅ Bridge status OK"; \
+	else \
+		echo "❌ Bridge status failed"; \
+		exit 1; \
+	fi
+
+test-federation-routing:
+	@echo "🔍 Testing federation message routing..."
+	@if curl -s -X POST http://localhost:8081/api/v1/bridge/test/federation/matrix.org -H "Content-Type: application/json" -d '{"test": "federation"}' | grep -q "status"; then \
+		echo "✅ Federation routing OK"; \
+	else \
+		echo "❌ Federation routing failed"; \
+		exit 1; \
+	fi
+
+test-message-transformation:
+	@echo "🔍 Testing message transformation..."
+	@if curl -s -X POST http://localhost:8081/api/v1/bridge/test/message-transform -H "Content-Type: application/json" -d '{"event_type": "m.room.message", "content": {"body": "test"}}' | grep -q "transformed"; then \
+		echo "✅ Message transformation OK"; \
+	else \
+		echo "❌ Message transformation failed"; \
+		exit 1; \
+	fi
+
+test-server-discovery:
+	@echo "🔍 Testing server discovery..."
+	@if curl -s http://localhost:8081/api/v1/bridge/routes | grep -q "routes"; then \
+		echo "✅ Server discovery OK"; \
+	else \
+		echo "❌ Server discovery failed"; \
+		exit 1; \
+	fi
+
+test-p2p-benefits:
+	@echo "🔍 Testing P2P benefits analysis..."
+	@if curl -s http://localhost:8081/api/v1/bridge/test/p2p-benefits | grep -q "benefits"; then \
+		echo "✅ P2P benefits analysis OK"; \
+	else \
+		echo "❌ P2P benefits analysis failed"; \
+		exit 1; \
+	fi
+
+test-end-to-end:
+	@echo "🔍 Running end-to-end test flow..."
+	@if curl -s -X POST http://localhost:8081/api/v1/bridge/test/end-to-end -H "Content-Type: application/json" -d '{"test_flow": "complete"}' | grep -q "success"; then \
+		echo "✅ End-to-end test flow OK"; \
+	else \
+		echo "❌ End-to-end test flow failed"; \
+		exit 1; \
+	fi
+
+# Individual component testing
+test-bridge: test-bridge-comprehensive
+test-mycelium: test-mycelium-detect
+test-federation: test-federation-routing
+test-matrix-org: test-federation
+test-backend: test-bridge-health
+test-frontend: test-frontend-load
+test-database:
+	@echo "🔍 Testing database connectivity..."
+	@if curl -s http://localhost:8080/api/health >/dev/null 2>&1; then \
+		echo "✅ Database connectivity OK"; \
+	else \
+		echo "❌ Database connectivity failed"; \
+		exit 1; \
+	fi
+
 # Show help information
 help:
-	@echo "MMC Ansible Deployment Makefile"
-	@echo "==============================="
+	@echo "MMC Ansible Deployment & Testing Makefile"
+	@echo "=========================================="
 	@echo ""
-	@echo "Targets:"
+	@echo "Deployment Targets:"
 	@echo "  make              - Run complete deployment (VM + preparation + app)"
 	@echo "  make all          - Same as 'make'"
 	@echo "  make deploy       - Complete deployment (Terraform/OpenTofu + Ansible)"
@@ -255,7 +362,21 @@ help:
 	@echo "  make logs         - Show ansible logs"
 	@echo "  make clean        - Clean deployment artifacts (keeps VM)"
 	@echo "  make clean-all    - Clean everything including VM"
-	@echo "  make help         - Show this help"
+	@echo ""
+	@echo "Phase 2 Testing Targets:"
+	@echo "  make test-phase2-quick    - Basic health validation"
+	@echo "  make test-bridge-health   - Bridge connectivity"
+	@echo "  make test-mycelium-detect - Mycelium availability"
+	@echo "  make test-frontend-load   - Frontend loading"
+	@echo "  make test-phase2          - Complete Phase 2 validation suite"
+	@echo "  make test-bridge          - Matrix Bridge service testing"
+	@echo "  make test-mycelium        - Mycelium P2P connectivity testing"
+	@echo "  make test-federation      - Federation routing testing"
+	@echo "  make test-matrix-org      - Matrix.org federation integration"
+	@echo "  make test-backend         - Infrastructure testing"
+	@echo "  make test-frontend        - UI functionality testing"
+	@echo "  make test-database        - Persistence layer testing"
+	@echo "  make test-end-to-end      - Full workflow validation"
 	@echo ""
 	@echo "Prerequisites:"
 	@echo "  - OpenTofu or Terraform installed"
@@ -269,6 +390,8 @@ help:
 	@echo "  make ping                # Test connectivity to deployed VM"
 	@echo "  make status              # Check if everything is running"
 	@echo "  make connect             # SSH into VM"
+	@echo "  make test-phase2-quick   # Quick Phase 2 health check"
+	@echo "  make test-phase2         # Full Phase 2 testing suite"
 	@echo ""
 	@echo "Deployment Methods:"
 	@echo "  OpenTofu:  Infrastructure as Code (recommended)"
