@@ -561,23 +561,6 @@ Your Mycelium-Matrix Chat is now live at `https://chat.example.com` with full P2
 - ✅ Enterprise-grade security
 - ✅ Production-ready infrastructure
 
-## 🚀 Next Steps
-
-### **For chat.projectmycelium.org:**
-1. **Choose Deployment Type**: Decide between IPv4+domain or mycelium-only
-2. **Set Configuration**: `TF_VAR_enable_public_ipv4=true` (for domain access)
-3. **Deploy**: Run `make deploy`
-4. **Configure DNS**: Point chat.projectmycelium.org to public IP (if IPv4)
-5. **Test**: Verify both access methods work
-6. **Launch**: Announce to users!
-
-### **For Custom Domains:**
-1. **Register Domain**: Get your domain (chat.yourcompany.com)
-2. **Deploy with IPv4**: `TF_VAR_enable_public_ipv4=true make deploy`
-3. **Configure DNS**: Point domain to TFGrid public IP
-4. **SSL Setup**: Automatic Let's Encrypt certificates
-5. **Go Live**: Your branded chat service is ready!
-
 ---
 
 *This guide was created for Mycelium-Matrix Chat Phase 2 deployment. For the latest updates, check the project repository.*
