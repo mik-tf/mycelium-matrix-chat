@@ -148,6 +148,11 @@ Choose between two deployment types based on your needs:
 - Choose your deployment type and get guided setup
 - Automatic configuration based on your choices
 
+#### Simple Environment Variable Deployment
+- **Set `TF_VAR_enable_public_ipv4=true`** - For IPv4 + Domain deployment
+- **Run `make deploy`** - Uses your environment variable automatically
+- Clean and simple approach!
+
 #### TFGrid Production Deployment (Ansible-Based System)
 
 **Prerequisites**:

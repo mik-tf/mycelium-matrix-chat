@@ -14,20 +14,23 @@ This guide provides step-by-step instructions for deploying Mycelium-Matrix Chat
 | **Dual Access** | `TF_VAR_enable_public_ipv4=true make deploy` | ~1.0 TFT/month | Both URLs above | Maximum flexibility |
 
 ### **Quick Start Commands:**
-```bash
-# 1. Set credentials
-export TF_VAR_mnemonic="your_mnemonic"
 
-# 2. Choose deployment type and deploy
-TF_VAR_enable_public_ipv4=true make deploy  # IPv4 + Domain
+#### **Simple Environment Variable Method (Recommended)**
+```bash
+# 1. Set credentials and deployment type
+export TF_VAR_mnemonic="your_mnemonic"
+export TF_VAR_enable_public_ipv4=true   # IPv4 + Domain (~1.0 TFT/month)
 # OR
-make deploy                                # Mycelium-only (default)
+export TF_VAR_enable_public_ipv4=false  # Mycelium-only (~0.5 TFT/month)
+
+# 2. Deploy with your configuration
+make deploy
 
 # 3. Get access URLs
 make status
 ```
 
-### **Interactive Deployment Script:**
+#### **Interactive Script Method**
 ```bash
 # For guided deployment with choices
 ./scripts/deploy-flexible.sh
@@ -40,27 +43,12 @@ make status
 # - Show you the access URLs
 ```
 
-### **Infrastructure Configuration Note:**
-To enable the flexible deployment options, update `infrastructure/main.tf`:
-```terraform
-vms {
-  name             = var.vm_name
-  flist            = var.flist
-  entrypoint       = var.entrypoint
-  publicip         = var.enable_public_ipv4  # ← Controlled by variable
-  mycelium_ip_seed = random_bytes.mycelium_ip_seed.hex
-  # ... rest of config
-}
-```
+### **Infrastructure Configuration:**
+The flexible deployment options are already configured in the infrastructure:
 
-And add to `infrastructure/variables.tf`:
-```terraform
-variable "enable_public_ipv4" {
-  description = "Enable public IPv4 access for domain-based deployment"
-  type        = bool
-  default     = false
-}
-```
+- **`infrastructure/variables.tf`** - Contains `enable_public_ipv4` variable
+- **`infrastructure/main.tf`** - Uses the variable to control IPv4 deployment
+- **Environment variables** - `TF_VAR_enable_public_ipv4=true/false` controls the deployment type
 
 ## 📋 Prerequisites
 
