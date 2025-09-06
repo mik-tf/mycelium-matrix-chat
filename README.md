@@ -119,6 +119,10 @@ make docs-phase2           # Open Phase 2 deployment guide
 
 ### For Operators & Deployers
 
+#### Complete Production Deployment Guide
+- **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT_GUIDE.md)** - Complete step-by-step deployment with DNS configuration for `chat.example.com`
+- Includes SSL setup, testing, monitoring, and troubleshooting
+
 #### TFGrid Production Deployment (Ansible-Based System)
 
 **Prerequisites**:
@@ -408,6 +412,7 @@ mycelium-matrix-chat/
 - **[User Experience](docs/USER_EXPERIENCE.md)** - UX flows and design specifications
 
 ### Implementation Guides
+- **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT_GUIDE.md)** - Complete deployment with DNS setup for `chat.example.com`
 - **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Step-by-step development setup
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment procedures
 - **[Ansible Deployment Guide](docs/ops/ansible-deployment.md)** - Complete TFGrid deployment system
