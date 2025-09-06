@@ -55,6 +55,12 @@ vm:
 # Prepare VM (ansible preparation roles)
 prepare: inventory
 	@echo "📦 Preparing VM with ansible..."
+	@echo "   First, checking VM connectivity over mycelium..."
+	@if ! make ping >/dev/null 2>&1; then \
+		echo "❌ VM connectivity check failed. Aborting preparation."; \
+		exit 1; \
+	fi
+	@echo "✅ VM is reachable, proceeding with Ansible preparation..."
 	@for i in 1 2 3 4 5; do \
 		echo "   Attempt $$i of 5..."; \
 		if ANSIBLE_CONFIG=platform/ansible.cfg ansible-playbook -i platform/inventory/hosts.ini platform/site.yml --tags preparation -vv; then \
